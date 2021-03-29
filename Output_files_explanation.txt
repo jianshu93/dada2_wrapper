@@ -1,0 +1,16 @@
+16Sreport_dada2_2017-11-21.pdf 					- Report containing all code and comments for reproducing the workflow.	
+all_samples_SV-counts.tsv						- Count table containing frequencies of each sequence variant in each sample.  Note that DADA2 uses the sequence variant itself as the label, e.g. there are no OTU numbers.		
+all_samples_GG13-8-taxonomy.tsv					- Greengenes taxonomic assignment for sequence variants.
+all_samples_SV-counts_and_GG13-8-taxonomy.tsv	- Merged count table and Greengenes taxonomic assignment.
+all_samples_SV-counts_and_RDP-taxonomy.tsv		- Merged count table and RDP taxonomic assignment.
+all_samples_SV-counts_and_SILVA-taxonomy.tsv	- Merged count table and SILVA taxonomic assignment.
+FastTree.tre									- Phylogenetic tree - inference of relatedness between sequence variants - primarily used for UniFrac distance calculations.	
+msa.fasta										- Multiple sequence alignment of sequence variants.
+seqtab_final.rds								- R data file containing seqeunce variant count table.  Same information as in all_samples_SV-counts.tsv, stored as an R data object.
+Read_QC											- Folder containing QC plots and tables.	
+	Error_rates_per_sample_FWD.pdf
+	Error_rates_per_sample_REV.pdf
+	FWD_read_plot.pdf
+	Read_counts_after_filtering.tsv
+	Read_counts_at_each_step.tsv
+	REV_read_plot.pdf
