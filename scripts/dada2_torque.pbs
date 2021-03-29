@@ -1,0 +1,23 @@
+#!/bin/bash
+#PBS -N DADA2-workflow-Jianshu
+#PBS -l mem=120gb
+#PBS -l nodes=1:ppn=24
+#PBS -l walltime=120:00:00
+#PBS -q inferno
+#PBS -A GT-ktk3-CODA20 ### user name for charging, change it according to your own need
+#PBS -o /storage/home/hcoda1/4/jzhao399/p-ktk3-0/rich_project_bio-konstantinidis/scripts/log/${PBS_JOBNAME}_${PBS_JOBID}.out ### change to your own directory here
+#PBS -e /storage/home/hcoda1/4/jzhao399/p-ktk3-0/rich_project_bio-konstantinidis/scripts/log/${PBS_JOBNAME}_${PBS_JOBID}.err ### change to your own directory here
+
+### activate conda environment to have a conda installed R
+
+module purge
+module load texlive/2020
+source ~/.bash_profile
+conda init bash
+conda activate base
+which Rscript
+
+git clone https://github.com/jianshu93/dada2_wrapper
+cd dada2_wrapper/scripts
+Rscript ./dada2_cli.r --input_dir=input --output_dir=output --pool
+Rscript ./dada2_cli.r --input_dir=input --output_dir=output_nopool

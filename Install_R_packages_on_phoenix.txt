@@ -1,0 +1,25 @@
+Installing R packages on Phoenix
+
+# First of all, install miniconda3 and you will have a conda installed R
+$ conda activate base
+$ R
+
+## after running R you will be in the R command line interface then run the following:
+
+> if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager",repos='http://cran.us.r-project.org')
+> library(BiocManager)
+
+> requiredPackages = c('RCurl','ggplot2','GenomicRanges','SummarizedExperiment',
+                    'BiocParallel','Rsamtools','dada2','msa','phangorn','gridExtra','knitr')
+> for(p in requiredPackages){
+  if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
+}
+
+
+### you will see DONE(dada2) finally which means you have successfully installed dada2
+
+
+
+
+
