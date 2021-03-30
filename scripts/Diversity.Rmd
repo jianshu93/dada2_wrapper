@@ -1,5 +1,5 @@
 ---
-title: "DADA2 analysis of 16S rRNA gene amplicon sequencing reads"
+title: "Diversity analysis of 16S amplicon after DADA2"
 author: "Jianshu Zhao"
 date: "`r Sys.Date()`"
 output: 
@@ -18,8 +18,7 @@ knitr::opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
 <br>
 
 ## Introduction
-Implementing DADA2 pipeline for resolving sequence variants from 16S rRNA gene amplicon **_paired-end_** sequencing reads, adopting the tutorial from https://benjjneb.github.io/dada2/tutorial.html and https://benjjneb.github.io/dada2/bigdata_paired.html with minor adjustments.  This report captures all the workflow steps necessary to reproduce the analysis.
-
+Diversity analysis for profiling community
 <br>
 
 ## Load R packages:  
