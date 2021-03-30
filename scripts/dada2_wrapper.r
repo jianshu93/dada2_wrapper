@@ -36,7 +36,7 @@ if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager",repos='http://cran.us.r-project.org')
 library(BiocManager)
   ### check if packages exists and then install packages that does not exist
-requiredPackages = c('RCurl','vegan','GUniFrac','ggplot2','GenomicRanges','SummarizedExperiment',
+requiredPackages = c('RCurl','ggplot2','GenomicRanges','SummarizedExperiment',
                     'BiocParallel','Rsamtools','dada2','msa','phangorn','gridExtra','rmarkdown','knitr')
 for(p in requiredPackages){
   if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
@@ -100,7 +100,6 @@ if(args.list$single == "TRUE") {
 
 # these variables are passed to the workflow
 input.path <- normalizePath( args.list$input_dir )
-
 output.dir <- ifelse( is.null(args.list$output_dir), "output", args.list$output_dir )
 
 if (!dir.exists(output.dir)){
@@ -117,17 +116,21 @@ if(args.list$single == "TRUE") {
   rmarkdown::render("dada2_16S_single_end.Rmd",
                   output_file = paste( output.dir, "/16Sreport_dada2_single", Sys.Date(), ".pdf", sep=''))
   if(args.list$diversity == "TRUE") {
-  BiocManager::install("devtools")
-  BiocManager::install("phyloseq")
-  rmarkdown::render("Diversity.Rmd",
+    requiredPackages = c('GUniFrac','devtools','phyloseq','vegan','iNEXT')
+    for(p in requiredPackages){
+      if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
+    }
+    rmarkdown::render("Diversity.Rmd",
                   output_file = paste( output.dir, "/16Sreport_diversity_single", Sys.Date(), ".pdf", sep=''))
   }
 } else {
   rmarkdown::render("dada2_16S_paired-end.Rmd",
                   output_file = paste( output.dir, "/16Sreport_dada2_pair", Sys.Date(), ".pdf", sep=''))
   if(args.list$diversity == "TRUE") {
-  BiocManager::install("devtools")
-  BiocManager::install("phyloseq")
+    requiredPackages = c('GUniFrac','devtools','phyloseq','vegan','iNEXT')
+    for(p in requiredPackages){
+      if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
+    }
   rmarkdown::render("Diversity.Rmd",
                   output_file = paste( output.dir, "/16Sreport_diversity_pair", Sys.Date(), ".pdf", sep=''))
   }
