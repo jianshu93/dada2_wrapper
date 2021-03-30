@@ -10,7 +10,7 @@ Before you start, make sure that you remove all the primers in the forwared and
 reverse reads. There is a bash script based on cutadapt software in the demo_input 
 directory (run in this directory only), run it will remoe primers for the forward and reverse reads. The primer is now set to universal 16S V3-V4 primer set 515F and 806R. Change the -a and -A option in the cut_primer.sh to your primer used during the amplification experiment. The demo_input reads contains no primer
 
-* IMPORTANT
+# IMPORTANT
 this pipeline is extensively tested under conda R version 4.0.2 on both MacOS and Linux (Ubuntu 18.0.4 and RHEL 7). I strongly suggest you reinstall a new R 4.0.2 from scratch but not update R in you conda. INSTALL A COMPLETELY NEW R 4.0.2! This will save you lot of trouble (updating R packages from an old version to a new one is annoying) 
 
 # DADA2 can now be run with this command (*_R1.fastq, *_R2.fastq or gzipped formatshould be in the input directory):
@@ -32,6 +32,10 @@ DADA2 R workflow for profiling 16S sequence reads consists of these two scripts:
   NOTE: This workflow requires paired-end 16S rDNA gene amplicon reads.
   NOTE: This workflow will analyze each sample independently to be able to process any sample size.  The option to pool samples for resolving sequence variants will be added.
   NOTE: Currently, the wrapper script dada2_wrapper.r and the workflow dada2_16S_paired-end.Rmd need to be in the same directory (and not in the input directory). By default the database is at the parent directory of the script dada2_wrapper.r, which is: ../reference_dbs_16S
+
+#### 3.dada2_16S_paired_end.Rmd - DADA2 workflow for single end 16S amplicon reads. It is very similar to the pair end version but only use forwared reads in the directory (*R1*.fastq) 
+
+#### 4. Diversity.Rmd - Diversity module that calculate both alpha and beta diversity using various metric such as chao1, bray-curtis, unifrac
 
 It is suggested that the pool mode is more sensitive than sample-based mode for detecting rare ASVs (http://fiererlab.org/2020/02/17/whats-in-a-number-estimating-microbial-richness-using-dada2/)
 
@@ -99,4 +103,35 @@ if you do not have textlive installed in your system, the programm will stop and
 For you own dataset just change the input directory to where your pair-end fastq file is. Do remember to remove primers first before running this pipeline. Check the script in the demo_input directory on how to do that. 
 
 Please contact jianshu.zhao@gatech.edu if you have any questions.
+
+
+
+
+# Reference
+
+Bodenhofer, U., Bonatesta, E., & Hochreiter, S. (2015). msa: an R package for multiple sequence alignment. Bioinformatics, 1–3. http://doi.org/10.1093/bioinformatics/btv494
+
+Murali, A., Bhargava, A., & Wright, E. S. (2018). IDTAXA: a novel approach for accurate taxonomic classification of microbiome sequences, 1–14. http://doi.org/10.1186/s40168-018-0521-5
+
+Price, M. N., Deha, P. S., & Arkin, A. P. (2010). FastTree 2 – Approximately Maximum-Likelihood Trees for Large Alignments, 5(3), e9490. http://doi.org/10.1371/journal.pone.0009490
+
+Callahan, B. J., Rosen, M. J., Han, A. W., Johnson, A. J. A., & Holmes, S. P. (2016). DADA2: High-resolution sample inference from Illumina amplicon data. Nature Methods, 13(7), 581–583. http://doi.org/10.1038/nmeth.3869
+
+phyloseq: An R Package for Reproducible Interactive Analysis and Graphics of Microbiome Census Data. (2013). phyloseq: An R Package for Reproducible Interactive Analysis and Graphics of Microbiome Census Data, 8(4), e61217–11. http://doi.org/10.1371/journal.pone.0061217
+
+Lozupone, C., & Knight, R. (2005). UniFrac: a new phylogenetic method for comparing microbial communities., 71(12), 8228–8235. http://doi.org/10.1128/AEM.71.12.8228-8235.2005
+
+Chen, J., Bittinger, K., Charlson, E. S., Hoffmann, C., Lewis, J., Wu, G. D., et al. (2012). Associating microbiome composition with environmental covariates using generalized UniFrac distances. Bioinformatics, 28(16), 2106–2113. http://doi.org/10.1093/bioinformatics/bts342
+
+Chao, A., GOTELLI, N. J., Hsieh, T. C., SANDER, E. L., Ma, K. H., COLWELL, R. K., & Ellison, A. M. (2014). Rarefaction and extrapolation with Hill numbers: a framework for sampling and estimation in species diversity studies. Ecological Monographs, 84(1), 45–67. http://doi.org/https://doi.org/10.1890/13-0133.1
+
+Hsieh, T. C., Ma, K. H., & Chao, A. (2016). iNEXT: an R package for rarefaction and extrapolation of species diversity (Hill numbers). Methods in Ecology and Evolution, 7(12), 1451–1456. http://doi.org/10.1111/2041-210X.12613
+
+
+
+
+
+
+
+
 
