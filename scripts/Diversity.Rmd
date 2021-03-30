@@ -1,0 +1,38 @@
+---
+title: "DADA2 analysis of 16S rRNA gene amplicon sequencing reads"
+author: "Jianshu Zhao"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: default
+---
+
+<br>
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width = 10)
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+
+<br>
+
+## Introduction
+Implementing DADA2 pipeline for resolving sequence variants from 16S rRNA gene amplicon **_paired-end_** sequencing reads, adopting the tutorial from https://benjjneb.github.io/dada2/tutorial.html and https://benjjneb.github.io/dada2/bigdata_paired.html with minor adjustments.  This report captures all the workflow steps necessary to reproduce the analysis.
+
+<br>
+
+## Load R packages:  
+```{r load_packages, echo=FALSE}
+
+# load packages
+library(devtools)
+devtools::install_github("vmikk/metagMisc")
+library(phyloseq); packageVersion("phyloseq")
+library(ggplot2) #Package to generate plots
+library(vegan) #community ecology package
+library(scales) #To modify scale of plot's axis
+library(metagMisc) #Package to manipulate phyloseq objects
+library(dplyr) #package used for data manipulation 
+library(reshape2) #package used for data manipulation 
+library(data.table) #package used for data manipulation 

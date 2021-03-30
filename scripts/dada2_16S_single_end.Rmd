@@ -1,5 +1,5 @@
 ---
-title: "DADA2 analysis of 16S rRNA gene amplicon sequencing reads"
+title: "DADA2 analysis of 16S rRNA gene amplicon sequencing reads--single end or forward only"
 author: "Jianshu Zhao"
 date: "`r Sys.Date()`"
 output: 
@@ -30,7 +30,7 @@ library(ggplot2)
 library(msa)
 library(gridExtra)
 library(phangorn)
-
+pool.samples
 # Helper function for breaking long strings in PDFs, e.g. filepaths:
 str_break = function(x, width = 80L) {
   n = nchar(x)
@@ -77,16 +77,12 @@ input.file.list <- grep( "*fastq", list.files( input.path ), value = T )
 
 # Sort ensures forward/reverse reads are in same order
 fnFs <- sort(grep( "_R1.*\\.fastq", list.files(input.path), value = T ) )
-fnRs <- sort(grep( "_R2.*\\.fastq", list.files(input.path), value = T ) )
 
 # Extract sample names, allowing variable filenames; e.g. *_R1[_001].fastq[.gz]
 sample.names <- gsub( "_R1.*\\.fastq(\\.gz)?", "", fnFs, perl = T)
-sample.namesR <- gsub( "_R2.*\\.fastq(\\.gz)?", "", fnRs, perl = T)
-if(!identical(sample.names, sample.namesR)) stop("Forward and reverse files do not match.")
 
 # Specify the full path to the fnFs and fnRs
 fnFs <- file.path(input.path, fnFs)
-fnRs <- file.path(input.path, fnRs)
 ```
 
 <br>
@@ -114,18 +110,6 @@ pdf(paste0(readQC.folder,"/FWD_read_plot.pdf"), onefile = TRUE)
 marrangeGrob( fwd.qc.plots.list, ncol=2, nrow=3, top = NULL )
 dev.off()
 rm(fwd.qc.plots.list)
-
-# Reverse reads
-rev.qc.plots.list <- list()
-for( i in 1 : length(fnRs)) {
-  rev.qc.plots.list[[i]] <- plotQualityProfile(fnRs[i])
-  rm(i)
-}
-# Save to file
-pdf(paste0(readQC.folder,"/REV_read_plot.pdf"), onefile = TRUE)
-marrangeGrob( rev.qc.plots.list, ncol=2, nrow=3, top = NULL )
-dev.off()
-rm(rev.qc.plots.list)
 ```
 
 <br>
@@ -139,7 +123,6 @@ ifelse(!dir.exists(filt_path), dir.create(filt_path, recursive = TRUE), FALSE)
 
 # Define filenames for filtered input files
 filtFs <- file.path(filt_path, paste0(sample.names, "_F_filt.fastq.gz"))
-filtRs <- file.path(filt_path, paste0(sample.names, "_R_filt.fastq.gz"))
 # Filter the forward and reverse reads:
 # Note that:
 # 1. Reads are both truncated and then filtered using the maxEE expected errors algorighm from UPARSE.
@@ -148,8 +131,8 @@ filtRs <- file.path(filt_path, paste0(sample.names, "_R_filt.fastq.gz"))
 # 4. Output files are compressed by default.
 
 rd.counts <- as.data.frame(
-  filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=c(225,190),
-              maxN=0, maxEE=c(1,2), truncQ=10, rm.phix=TRUE,
+  filterAndTrim(fnFs, filtFs, truncLen=225,
+              maxN=0, maxEE=1, truncQ=10, rm.phix=TRUE,
               compress=TRUE, multithread=TRUE) 
 )
 # Table of before/after read counts
@@ -169,19 +152,14 @@ The DADA2 algorithm depends on a parametric error model (err) and every amplicon
 set.seed(100)
 # Filtered forward reads
 errF <- learnErrors(filtFs, nread=1e6, multithread=TRUE)
-# Filtered reverse reads
-errR <- learnErrors(filtRs, nread=1e6, multithread=TRUE)
-
 
 # Visualize the estimated error rates
 # Forward
 #plotErrors(errF, nominalQ=TRUE)
 # Save to file 
-ggsave(paste0(readQC.folder,"/Error_rates_per_sample_FWD.pdf"), plotErrors(errF, nominalQ=TRUE) , device = "pdf")
+ggsave(paste0(readQC.folder,"/Error_rates_per_sample_single.pdf"), plotErrors(errF, nominalQ=TRUE) , device = "pdf")
 # Reverse
 #plotErrors(errR, nominalQ=TRUE)
-# Save to file 
-ggsave(paste0(readQC.folder,"/Error_rates_per_sample_REV.pdf"), plotErrors(errR, nominalQ=TRUE) , device = "pdf")
 ```
 
 <br>
@@ -213,17 +191,13 @@ Spurious sequence variants are further reduced by merging overlapping reads. The
 mergers <- vector("list", length(sample.names))
 names(mergers) <- sample.names
 names(filtFs) <- sample.names
-names(filtRs) <- sample.names
 for(sam in sample.names) {
   cat("Processing:", sam, "\n")
     derepF <- derepFastq(filtFs[[sam]])
     ddF <- dada(derepF, err=errF, multithread=TRUE)
-    derepR <- derepFastq(filtRs[[sam]])
-    ddR <- dada(derepR, err=errR, multithread=TRUE)
-    merger <- mergePairs(ddF, derepF, ddR, derepR)
-    mergers[[sam]] <- merger
+    mergers[[sam]] <- ddF
 }
-rm(derepF); rm(derepR)
+rm(derepF)
 ```
 
 ## Construct sequence table
@@ -269,7 +243,7 @@ As a final check of the progress, look at the number of reads that made it throu
 ```{r Track_reads_table}
 getN <- function(x) sum(getUniques(x))
 track <- cbind(rd.counts, sapply(mergers, getN), rowSums(seqtab), rowSums(seqtab.nochim))
-colnames(track) <- c("input", "filtered", "ratio", "merged", "tabled", "nonchim")
+colnames(track) <- c("input", "filtered", "ratio", "single", "tabled", "nonchim")
 rownames(track) <- sample.names
 # print table
 track

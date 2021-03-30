@@ -36,11 +36,12 @@ if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager",repos='http://cran.us.r-project.org')
 library(BiocManager)
   ### check if packages exists and then install packages that does not exist
-requiredPackages = c('RCurl','vegan','GUniFrac','ggplot2','phyloseq','GenomicRanges','SummarizedExperiment',
+requiredPackages = c('RCurl','vegan','GUniFrac','ggplot2','GenomicRanges','SummarizedExperiment',
                     'BiocParallel','Rsamtools','dada2','msa','phangorn','gridExtra','rmarkdown','knitr')
 for(p in requiredPackages){
   if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
 }
+
 ### install dependencies using conda
 if(Sys.which("pandoc") == "") {
   system("conda install pandoc -y")
@@ -55,6 +56,18 @@ if( any( grepl("--pool", args) ) ) {
   args <- gsub( "--pool", "--pool=TRUE", args)
 } else {
   args <- c(args, "--pool=FALSE")
+}
+
+if( any( grepl("--single", args) ) ) {
+  args <- gsub( "--single", "--single=TRUE", args)
+} else {
+  args <- c(args, "--single=FALSE")
+}
+
+if( any( grepl("--diversity", args) ) ) {
+  args <- gsub( "--diversity", "--diversity=TRUE", args)
+} else {
+  args <- c(args, "--diversity=FALSE")
 }
 
 ## Parse arguments (we expect the form --arg=value)
@@ -79,7 +92,11 @@ if(length(args) > 1) {
 }
 
 # print contents of folder
-cat( grep( "*\\.fastq", list.files(args.list$input_dir), value=T ), sep = "\n" )
+if(args.list$single == "TRUE") {
+  cat( grep( "*R1\\.fastq", list.files(args.list$input_dir), value=T ), sep = "\n" )
+} else {
+  cat( grep( "*\\.fastq", list.files(args.list$input_dir), value=T ), sep = "\n" )
+}
 
 # these variables are passed to the workflow
 input.path <- normalizePath( args.list$input_dir )
@@ -91,10 +108,35 @@ dir.create(output.dir)
 } else {
     print("Dir already exists! If you do not want to overwrite it, please use a new directory")
 }
+
 pool.samples <- args.list$pool
+pool.samples
 # Run dada2 Rmarkdown workflow and output report using Rmarkdown
-rmarkdown::render("dada2_16S_paired-end.Rmd",
-                  output_file = paste( output.dir, "/16Sreport_dada2_", Sys.Date(), ".pdf", sep='')
-)
+
+if(args.list$single == "TRUE") {
+  rmarkdown::render("dada2_16S_single_end.Rmd",
+                  output_file = paste( output.dir, "/16Sreport_dada2_single", Sys.Date(), ".pdf", sep=''))
+  if(args.list$diversity == "TRUE") {
+  BiocManager::install("devtools")
+  BiocManager::install("phyloseq")
+  rmarkdown::render("Diversity.Rmd",
+                  output_file = paste( output.dir, "/16Sreport_diversity_single", Sys.Date(), ".pdf", sep=''))
+  }
+} else {
+  rmarkdown::render("dada2_16S_paired-end.Rmd",
+                  output_file = paste( output.dir, "/16Sreport_dada2_pair", Sys.Date(), ".pdf", sep=''))
+  if(args.list$diversity == "TRUE") {
+  BiocManager::install("devtools")
+  BiocManager::install("phyloseq")
+  rmarkdown::render("Diversity.Rmd",
+                  output_file = paste( output.dir, "/16Sreport_diversity_pair", Sys.Date(), ".pdf", sep=''))
+  }
+}
+
+
+
+
+
+
 
 
