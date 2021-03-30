@@ -17,19 +17,21 @@ this pipeline is extensively tested under conda R version 4.0.2 on both MacOS an
 ```
 git clone https://github.com/jianshu93/dada2_wrapper
 cd dada2_wrapper/scripts
-./dada2_cli.r --input_dir=../demo_input --output_dir=output --pool
+./dada2_wrapper.r --input_dir=../demo_input --output_dir=output --pool
+
+./dada2_wrapper.r --input_dir=../demo_input --output_dir=output --pool --single
 ```
 
 
 DADA2 R workflow for profiling 16S sequence reads consists of these two scripts:
 --------------------------------------------------------------------------------
 
-#### 1. dada2_cli.r - This wrapper script parses arguments from the command line and passes them to and invokes the DADA2 workflow (dada2_16S_paired-end.Rmd).
+#### 1. dada2_wrapper.r - This wrapper script parses arguments from the command line and passes them to and invokes the DADA2 workflow (dada2_16S_paired-end.Rmd).
 
 #### 2. dada2_16S_paired-end.Rmd - DADA2 workflow for resolving sequence variants from 16S amplicon reads. In addition to OTU picking and taxonomy assignment, it will also produce a QC folder with visuals and read counts (before/after). 
   NOTE: This workflow requires paired-end 16S rDNA gene amplicon reads.
   NOTE: This workflow will analyze each sample independently to be able to process any sample size.  The option to pool samples for resolving sequence variants will be added.
-  NOTE: Currently, the wrapper script dada2_cli.r and the workflow dada2_16S_paired-end.Rmd need to be in the same directory (and not in the input directory). By default the database is at the parent directory of the script dada2_cli.r, which is: ../reference_dbs_16S
+  NOTE: Currently, the wrapper script dada2_wrapper.r and the workflow dada2_16S_paired-end.Rmd need to be in the same directory (and not in the input directory). By default the database is at the parent directory of the script dada2_wrapper.r, which is: ../reference_dbs_16S
 
 It is suggested that the pool mode is more sensitive than sample-based mode for detecting rare ASVs (http://fiererlab.org/2020/02/17/whats-in-a-number-estimating-microbial-richness-using-dada2/)
 
@@ -79,9 +81,9 @@ srun --partition=ieg_plus --nodes=1 --ntasks-per-node=1 --cpus-per-task=24 --tim
 
 git clone https://github.com/jianshu93/dada2_wrapper
 cd dada2_wrapper/scripts
-./dada2_cli.r --input_dir=../demo_input --output=output --pool
+./dada2_wrapper.r --input_dir=../demo_input --output=output --pool
 
-# NOTE: Prior to running make sure to install DADA2 R package dependencies. I have added a few lines to install all packages in the dada2_cli.r script after you have successfully install miniconda3 and activate base environment.
+# NOTE: Prior to running make sure to install DADA2 R package dependencies. I have added a few lines to install all packages in the dada2_wrapper.r script after you have successfully install miniconda3 and activate base environment.
 
 ```
 you will need pandoc and texlive to generate pdf files.
