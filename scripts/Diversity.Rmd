@@ -35,3 +35,6 @@ library(metagMisc) #Package to manipulate phyloseq objects
 library(dplyr) #package used for data manipulation 
 library(reshape2) #package used for data manipulation 
 library(data.table) #package used for data manipulation 
+library(vegan)
+library(iNEXT)
+library(GUniFrac)

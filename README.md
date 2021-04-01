@@ -23,7 +23,7 @@ cd dada2_wrapper/scripts
 ```
 
 
-DADA2 R workflow for profiling 16S sequence reads consists of these two scripts:
+DADA2 R workflow for profiling 16S sequence reads consists of these 4 scripts:
 --------------------------------------------------------------------------------
 
 #### 1. dada2_wrapper.r - This wrapper script parses arguments from the command line and passes them to and invokes the DADA2 workflow (dada2_16S_paired-end.Rmd).
@@ -33,7 +33,7 @@ DADA2 R workflow for profiling 16S sequence reads consists of these two scripts:
   NOTE: This workflow will analyze each sample independently to be able to process any sample size.  The option to pool samples for resolving sequence variants will be added.
   NOTE: Currently, the wrapper script dada2_wrapper.r and the workflow dada2_16S_paired-end.Rmd need to be in the same directory (and not in the input directory). By default the database is at the parent directory of the script dada2_wrapper.r, which is: ../reference_dbs_16S
 
-#### 3.dada2_16S_paired_end.Rmd - DADA2 workflow for single end 16S amplicon reads. It is very similar to the pair end version but only use forwared reads in the directory (*R1*.fastq) 
+#### 3.dada2_16S_single_end.Rmd - DADA2 workflow for single end 16S amplicon reads. It is very similar to the pair end version but only use forwared reads in the directory (*R1*.fastq). Please name you reads file with *R1* if you have only single end reads data 
 
 #### 4. Diversity.Rmd - Diversity module that calculate both alpha and beta diversity using various metric such as chao1, bray-curtis, unifrac
 
@@ -63,7 +63,7 @@ for(p in requiredPackages){
 #### Time needed and platform dependent questions
 for the testing dataset, 6 samples, a few million reads per sample, it takes ~20 minutes on a 4-core (8 threads) Macbook Pro. For a 72 sample dataset with more than 10 million reads per sample, it takes about 5 hours on a 24 threads Linux system on a cluster node.
 
-#### Running DADA2 on Phoenix cluster/TORQUE based or SLURM based cluster
+#### Running DADA2 on TORQUE based or SLURM based cluster
 
 
 ```
