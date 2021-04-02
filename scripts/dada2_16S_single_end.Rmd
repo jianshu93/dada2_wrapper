@@ -30,6 +30,11 @@ library(ggplot2)
 library(msa)
 library(gridExtra)
 library(phangorn)
+library(stringr)
+library("Biostrings")
+library(dplyr)
+library(tibble)
+
 pool.samples
 # Helper function for breaking long strings in PDFs, e.g. filepaths:
 str_break = function(x, width = 80L) {
@@ -123,6 +128,13 @@ ifelse(!dir.exists(filt_path), dir.create(filt_path, recursive = TRUE), FALSE)
 
 # Define filenames for filtered input files
 filtFs <- file.path(filt_path, paste0(sample.names, "_F_filt.fastq.gz"))
+
+# remove primers
+if(!is.null(Fwd_pr)) {
+  removePrimers(fnFs, fnFs.noprimer, primer.fwd=Fwd_pr, trim.fwd = TRUE,orient=TRUE, verbose=TRUE)
+} else {
+  fnFs.noprimer <- fnFs
+}
 # Filter the forward and reverse reads:
 # Note that:
 # 1. Reads are both truncated and then filtered using the maxEE expected errors algorighm from UPARSE.
@@ -131,7 +143,7 @@ filtFs <- file.path(filt_path, paste0(sample.names, "_F_filt.fastq.gz"))
 # 4. Output files are compressed by default.
 
 rd.counts <- as.data.frame(
-  filterAndTrim(fnFs, filtFs, truncLen=225,
+  filterAndTrim(fnFs.noprimer, filtFs, truncLen=225,
               maxN=0, maxEE=1, truncQ=10, rm.phix=TRUE,
               compress=TRUE, multithread=TRUE) 
 )
@@ -249,6 +261,21 @@ rownames(track) <- sample.names
 track
 # save to file
 write.table( track, paste0( readQC.folder, "/Read_counts_at_each_step.tsv" ), sep = "\t", quote = F, eol = "\n", col.names = NA )
+
+# rename fasta header and write to file
+library(dplyr)
+seqtab.nochim_trans <- as.data.frame(t(seqtab.nochim)) %>% rownames_to_column(var = "sequence") %>% 
+    rowid_to_column(var = "OTUNumber") %>% mutate(OTUNumber = sprintf("otu%04d", 
+    OTUNumber)) %>% mutate(sequence = str_replace_all(sequence, "(-|\\.)", ""))
+
+df <- seqtab.nochim_trans
+seq_out <- Biostrings::DNAStringSet(df$sequence)
+
+names(seq_out) <- df$OTUNumber
+
+Biostrings::writeXStringSet(seq_out, str_c(output.dir, "/ASV_rep_no_tax.fasta"), 
+    compress = FALSE, width = 20000)
+
 ```
 
 <br>

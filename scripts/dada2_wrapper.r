@@ -2,7 +2,6 @@
 ### Jianshu Zhao (jianshu.zhao@gatech.edu). Wrapper for dada2 and IDTAXA for amplicon sequencing analysis
 ### requireed R packages are dada2, phangorn, msa, ggplot2 and vegan for diveristy analysis. This script will automatically
 ### install all the required packages and check required external softwares.
-### fasttree or FastTreeMP (rename to fasttree) is required for building phylogenetic trees.
 ### all barcodes and primers shoud be removed for all R1 and R2 reads in the input directory.
 ### you can use either catadaper or usearch --search_oligo command to remove primers before using this script
 
@@ -36,17 +35,19 @@ if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager",repos='http://cran.us.r-project.org')
 library(BiocManager)
   ### check if packages exists and then install packages that does not exist
-requiredPackages = c('RCurl','ggplot2','GenomicRanges','SummarizedExperiment',
+requiredPackages = c('dplyr','RCurl','mgcv','ggplot2','tibble','GenomicRanges','SummarizedExperiment',
                     'BiocParallel','Rsamtools','dada2','msa','phangorn','gridExtra','rmarkdown','knitr')
 for(p in requiredPackages){
   if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
 }
+for(p in requiredPackages){
+  require(p,character.only = TRUE)
+}
 
 ### install dependencies using conda
 if(Sys.which("pandoc") == "") {
-  system("conda install pandoc -y")
+  system("conda install pandoc")
 }
-
 
 ### load libraries
 library("knitr")
@@ -70,12 +71,21 @@ if( any( grepl("--diversity", args) ) ) {
   args <- c(args, "--diversity=FALSE")
 }
 
+if( any( grepl("--feast", args) ) ) {
+  args <- gsub( "--feast", "--feast=TRUE", args)
+} else {
+  args <- c(args, "--feast=FALSE")
+}
+
 ## Parse arguments (we expect the form --arg=value)
 parseArgs <- function(x) strsplit(sub("^--", "", x), "=")
 args.df <- as.data.frame(do.call("rbind", parseArgs(args)))
 
 args.list <- as.list(as.character(args.df$V2))
 names(args.list) <- args.df$V1
+
+Fwd_pr <- args.list$forward
+Rvs_pr <- args.list$reverse
 
 ## Arg1 default
 if(is.null(args.list$input_dir)) {
@@ -105,11 +115,15 @@ output.dir <- ifelse( is.null(args.list$output_dir), "output", args.list$output_
 if (!dir.exists(output.dir)){
 dir.create(output.dir)
 } else {
-    print("Dir already exists! If you do not want to overwrite it, please use a new directory")
+    stop("Dir already exists! If you do not want to overwrite it, please use a new directory.\n", call.=FALSE)
 }
 
 pool.samples <- args.list$pool
 pool.samples
+
+diversity.samples <- args.list$diversity
+diversity.samples
+
 # Run dada2 Rmarkdown workflow and output report using Rmarkdown
 
 if(args.list$single == "TRUE") {
@@ -120,6 +134,9 @@ if(args.list$single == "TRUE") {
     for(p in requiredPackages){
       if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
     }
+    library(devtools)
+    devtools::install_github("cozygene/FEAST")
+    devtools::install_github("vmikk/metagMisc")
     rmarkdown::render("Diversity.Rmd",
                   output_file = paste( output.dir, "/16Sreport_diversity_single", Sys.Date(), ".pdf", sep=''))
   }
@@ -131,10 +148,29 @@ if(args.list$single == "TRUE") {
     for(p in requiredPackages){
       if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
     }
-  rmarkdown::render("Diversity.Rmd",
-                  output_file = paste( output.dir, "/16Sreport_diversity_pair", Sys.Date(), ".pdf", sep=''))
+    library(devtools)
+    devtools::install_github("vmikk/metagMisc")
+    rmarkdown::render("Diversity.Rmd",
+                  output_file = paste( output.dir, "/16Sreport_diversity_pair", Sys.Date(), ".pdf", sep=''))     
+    }
   }
 }
+
+if(args.list$feast = "TRUE") {
+  requiredPackages = c("Rcpp", "RcppArmadillo", "vegan", "dplyr", "reshape2", "gridExtra", "ggplot2", "ggthemes")
+  for(p in requiredPackages){
+    if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
+  }
+  library(devtools)
+  devtools::install_github("cozygene/FEAST")
+  if(!file.exists(fst_metada)) {
+    stop("Metadata file does not exist, please offer a valid metadata file.\n", call.=FALSE)
+  } else {
+    rmarkdown::render("FEAST.Rmd",
+                  output_file = paste( output.dir, "/16S_report_MST_FEAST_pair", Sys.Date(), ".pdf", sep=''))
+  }
+}
+
 
 
 
