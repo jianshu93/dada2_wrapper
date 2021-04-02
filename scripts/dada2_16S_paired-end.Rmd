@@ -30,7 +30,25 @@ library(ggplot2)
 library(msa)
 library(gridExtra)
 library(phangorn)
+library(stringr)
+library("Biostrings")
+library(dplyr)
+library(tibble)
+
+### variables inherited from main script
 pool.samples
+Fwd_pr
+Rvs_pr
+
+
+### set DADA2 variables
+getDadaOpt()
+
+setDadaOpt(OMEGA_A = 1e-40)
+setDadaOpt(MATCH=5, MISMATCH=-4, GAP_PENALTY=-8)
+setDadaOpt(GREEDY=TRUE, GAPLESS=TRUE)
+
+
 # Helper function for breaking long strings in PDFs, e.g. filepaths:
 str_break = function(x, width = 80L) {
   n = nchar(x)
@@ -69,6 +87,7 @@ cat( str_break( getwd() ), sep = "\n" )
 
 # Variable "input.path" containing path to input fastq files directory 
 # is inherited from wrapper script dada2_cli.r.
+
 
 input.file.list <- grep( "*fastq", list.files( input.path ), value = T )
 #input.path <- normalizePath("input/")
@@ -140,6 +159,19 @@ ifelse(!dir.exists(filt_path), dir.create(filt_path, recursive = TRUE), FALSE)
 # Define filenames for filtered input files
 filtFs <- file.path(filt_path, paste0(sample.names, "_F_filt.fastq.gz"))
 filtRs <- file.path(filt_path, paste0(sample.names, "_R_filt.fastq.gz"))
+
+fnFs.noprimer <- file.path(filt_path, paste0(sample.names, "noprimer_F_filt.fastq.gz"))
+fnRs.noprimer <- file.path(filt_path, paste0(sample.names, "noprimer_R_filt.fastq.gz"))
+
+# remove primers
+if(!is.null(Fwd_pr) & !is.null(Rvs_pr)){
+  removePrimers(fnFs, fnFs.noprimer, primer.fwd=Fwd_pr, trim.fwd = TRUE,orient=TRUE, verbose=TRUE)
+  removePrimers(fnRs, fnRs.noprimer, primer.fwd=Rvs_pr, trim.fwd = TRUE, orient=TRUE, verbose=TRUE)
+} else {
+  fnFs.noprimer <- fnFs
+  fnRs.noprimer <- fnRs
+}
+
 # Filter the forward and reverse reads:
 # Note that:
 # 1. Reads are both truncated and then filtered using the maxEE expected errors algorighm from UPARSE.
@@ -148,9 +180,9 @@ filtRs <- file.path(filt_path, paste0(sample.names, "_R_filt.fastq.gz"))
 # 4. Output files are compressed by default.
 
 rd.counts <- as.data.frame(
-  filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=c(225,190),
-              maxN=0, maxEE=c(1,2), truncQ=10, rm.phix=TRUE,
-              compress=TRUE, multithread=TRUE) 
+  filterAndTrim(fnFs.noprimer, filtFs, fnRs.noprimer, filtRs, truncLen=c(225,190),
+             maxN=0, maxEE=c(1,2), truncQ=10, rm.phix=TRUE,
+             compress=TRUE, multithread=TRUE, matchIDs=TRUE) 
 )
 # Table of before/after read counts
 rd.counts$ratio <- round( rd.counts$reads.out / rd.counts$reads.in, digits = 2 )
@@ -275,6 +307,19 @@ rownames(track) <- sample.names
 track
 # save to file
 write.table( track, paste0( readQC.folder, "/Read_counts_at_each_step.tsv" ), sep = "\t", quote = F, eol = "\n", col.names = NA )
+
+# rename fasta header and write to file
+seqtab.nochim_trans <- as.data.frame(t(seqtab.nochim)) %>% rownames_to_column(var = "sequence") %>% 
+    rowid_to_column(var = "OTUNumber") %>% mutate(OTUNumber = sprintf("otu%04d", 
+    OTUNumber)) %>% mutate(sequence = str_replace_all(sequence, "(-|\\.)", ""))
+
+df <- seqtab.nochim_trans
+seq_out <- Biostrings::DNAStringSet(df$sequence)
+
+names(seq_out) <- df$OTUNumber
+
+Biostrings::writeXStringSet(seq_out, str_c(output.dir, "/ASV_rep_no_tax.fasta"), 
+    compress = FALSE, width = 20000)
 ```
 
 <br>
@@ -285,6 +330,9 @@ Multiple sequence alignment of resolved sequence variants is used to generate a 
 ```{r Phylogeny}
 # Get sequences
 seqs <- getSequences(seqtab.nochim)
+# save non-chimera, representative sequences
+
+
 names(seqs) <- seqs # This propagates to the tip labels of the tree
 # Multiple seqeuence alignment
 mult <- msa(seqs, method="ClustalOmega", type="dna", order="input")
@@ -346,10 +394,10 @@ The convenience function `addSpecies( ... )` takes as input a taxonomy table, an
 ```{r SILVA_and_RDP_taxonomy}
 # Assign SILVA taxonomy
 taxa.silva <- assignTaxonomy(seqtab.nochim, "../reference_dbs_16S/silva_nr_v128_train_set.fa.gz", multithread = TRUE)
-
+saveRDS(taxa.silva, paste0( output.dir, "/taxa.silva.1.rds") )
 # Replace NAs in taxonomy assignment table with prefix corresponding to tax rank
 taxa.silva.2 <- replaceNA.in.assignedTaxonomy( taxa.silva )
-
+saveRDS(taxa.silva.2, paste0( output.dir, "/taxa.silva.2.rds") )
 # OMIT APPENDING SPECIES FOR SILVA DUE TO MEMORY CONSTRAINTS
 # Append species. Note that appending the argument 'allowMultiple=3' will return up to 3 different matched
 # species, but if 4 or more are matched it returns NA.
@@ -359,6 +407,7 @@ taxa.silva.2 <- replaceNA.in.assignedTaxonomy( taxa.silva )
 otu.silva.tax.table <- merge( t(seqtab.nochim), taxa.silva.2, by = 'row.names' )
 rownames( otu.silva.tax.table ) <- otu.silva.tax.table[,1]
 otu.silva.tax.table <- otu.silva.tax.table[,-1]
+
 
 write.table(otu.silva.tax.table, paste0( output.dir, "/all_samples_SV-counts_and_SILVA-taxonomy.tsv" ), sep = "\t", eol = "\n", quote = F, col.names = NA)
 
@@ -382,7 +431,6 @@ otu.rdp.tax.table <- otu.rdp.tax.table[,-1]
 
 write.table(otu.rdp.tax.table, paste0( output.dir, "/all_samples_SV-counts_and_RDP-taxonomy.tsv" ), sep = "\t", eol = "\n", quote = F, col.names = NA)
 ```
-
 
 \newpage
 Session Info:

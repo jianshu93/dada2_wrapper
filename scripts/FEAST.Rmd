@@ -1,0 +1,73 @@
+---
+title: "DADA2 analysis of 16S rRNA gene amplicon sequencing reads"
+author: "Jianshu Zhao"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: default
+---
+
+<br>
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width = 10)
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+
+<br>
+
+## Introduction
+Implementing DADA2 pipeline for resolving sequence variants from 16S rRNA gene amplicon **_paired-end_** sequencing reads, adopting the tutorial from https://benjjneb.github.io/dada2/tutorial.html and https://benjjneb.github.io/dada2/bigdata_paired.html with minor adjustments.  This report captures all the workflow steps necessary to reproduce the analysis.
+
+<br>
+
+## Load R packages:  
+```{r load_packages, echo=FALSE}
+# load packages
+library(RcppArmadillo)
+library(FEAST)
+library(vegan)
+library(reshape2)
+library(ggplot2)
+
+
+# print filepath
+cat( str_break( getwd() ), sep = "\n" )
+```
+
+
+<br>
+
+
+## Get input ASV/otu table.
+```{r get_otu_table}
+
+# Variable "output.dir","fst_metadata" containing path to input metadata file
+# is inherited from wrapper script dada2_cli.r.
+setwd(output.dir)
+table <- read.table("all_samples_SV-counts.tsv", sep='\t', header = T, row.names =1)
+dim(table)
+head(table)
+metadata <- read.table(fst_metadata, sep='\t', header = T, row.names =1)
+head(metadata)
+
+metadata_new <- Load_metadata(metadata_path = fst_metadata)
+otus <- Load_CountMatrix(CountMatrix_path = "all_samples_SV-counts.tsv")
+
+```
+
+<br>
+
+## do microbial source tracking analysis and plot.
+```{r microbial source tracking is running}
+# running FEAST and plot
+FEAST_output <- FEAST(C = otus, metadata = metadata_new,EM_iterations = 1000, COVERAGE = NULL,
+       different_sources_flag = 1, dir_path=output.dir, outfile="FEAST_output")
+PlotSourceContribution(SinkNames = rownames(FEAST_output)[c(5:8)],
+                       SourceNames = colnames(FEAST_output), dir_path = output.dir,
+                       mixing_proportions = FEAST_output, Plot_title = "FEAST_",Same_sources_flag = 0, N = 4)
+
+```
+
+<br>

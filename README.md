@@ -13,13 +13,21 @@ directory (run in this directory only), run it will remoe primers for the forwar
 # IMPORTANT
 this pipeline is extensively tested under conda R version 4.0.2 on both MacOS and Linux (Ubuntu 18.0.4 and RHEL 7). I strongly suggest you reinstall a new R 4.0.2 from scratch but not update R in you conda. INSTALL A COMPLETELY NEW R 4.0.2! This will save you lot of trouble (updating R packages from an old version to a new one is annoying) 
 
-# DADA2 can now be run with this command (*_R1.fastq, *_R2.fastq or gzipped formatshould be in the input directory):
+# DADA2 can now be run with those command (*_R1.fastq, *_R2.fastq or gzipped formatshould be in the input directory):
 ```
 git clone https://github.com/jianshu93/dada2_wrapper
 cd dada2_wrapper/scripts
-./dada2_wrapper.r --input_dir=../demo_input --output_dir=output --pool
 
-./dada2_wrapper.r --input_dir=../demo_input --output_dir=output --pool --single
+#### pool mode
+time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output --pool
+#### pool mode for forward reads only
+time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output --pool --single
+
+### if you provider primers directly to the wrapper, we can also work it out. But it's slower than cutadapt. Therefore, I still suggest that you use cutadapt first. If you are lasy, you can just do it here. It takes about another 15 minutes to cut primers, very slow compare to cutadapt.
+
+time Rscript ./dada2_wrapper.r --input_dir=/storage/home/hcoda1/4/jzhao399/p-ktk3-0/rich_project_bio-konstantinidis/salt_marsh/DADA2_workshop/raw_sequences --output_dir=output1 --pool --forward=GTGCCAGCMGCCGCGGTAA --reverse=GGACTACHVGGGTWTCTAAT
+
+
 ```
 
 
@@ -54,14 +62,16 @@ if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager",repos='http://cran.us.r-project.org')
 library(BiocManager)
 
-requiredPackages = c('RCurl','ggplot2','GenomicRanges','SummarizedExperiment',
+requiredPackages = c('dplyr','RCurl','ggplot2','GenomicRanges','SummarizedExperiment',
                     'BiocParallel','Rsamtools','dada2','msa','phangorn','gridExtra','knitr')
 for(p in requiredPackages){
   if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
 }
 ```
+The whole process of install packages will take a few minutes on MacOS (.dmg installed R from R website) but will take much longer on Linux, like ~25 minutes (also ~25 minutes if you are using conda R on MacOS, because you need compiling using conda R). I woud strongly suggest that you use MacOS for small dataset (less than 30 samples) and linux cluster for large dataset.
+
 #### Time needed and platform dependent questions
-for the testing dataset, 6 samples, a few million reads per sample, it takes ~20 minutes on a 4-core (8 threads) Macbook Pro. For a 72 sample dataset with more than 10 million reads per sample, it takes about 5 hours on a 24 threads Linux system on a cluster node.
+for the testing dataset, 6 samples, a few million reads per sample, it takes ~8 minutes on a 4-core (8 threads) Macbook Pro but ~15 minutes on a dual-core (4 threads) iMac. For a 72 sample dataset with more than 10 million reads per sample, it takes about 5 hours on a 24 threads Linux system on a cluster node.
 
 #### Running DADA2 on TORQUE based or SLURM based cluster
 
@@ -126,6 +136,10 @@ Chen, J., Bittinger, K., Charlson, E. S., Hoffmann, C., Lewis, J., Wu, G. D., et
 Chao, A., GOTELLI, N. J., Hsieh, T. C., SANDER, E. L., Ma, K. H., COLWELL, R. K., & Ellison, A. M. (2014). Rarefaction and extrapolation with Hill numbers: a framework for sampling and estimation in species diversity studies. Ecological Monographs, 84(1), 45–67. http://doi.org/https://doi.org/10.1890/13-0133.1
 
 Hsieh, T. C., Ma, K. H., & Chao, A. (2016). iNEXT: an R package for rarefaction and extrapolation of species diversity (Hill numbers). Methods in Ecology and Evolution, 7(12), 1451–1456. http://doi.org/10.1111/2041-210X.12613
+
+Shenhav, L., Thompson, M., Joseph, T. A., Briscoe, L., Furman, O., Bogumil, D., et al. (2019). FEAST: fast expectation-maximization for microbial source tracking. Nature Methods, 1–10. http://doi.org/10.1038/s41592-019-0431-x 
+
+
 
 
 
