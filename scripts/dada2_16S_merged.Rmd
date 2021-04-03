@@ -1,0 +1,412 @@
+---
+title: "DADA2 analysis of 16S rRNA gene amplicon sequencing reads--merged mode"
+author: "Jianshu Zhao (jianshu.zhao@gatech.edu)"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: default
+---
+
+<br>
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width = 10)
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+
+<br>
+
+## Introduction
+Implementing DADA2 pipeline for resolving sequence variants from 16S rRNA gene amplicon **_paired-end_** sequencing reads, adopting the tutorial from https://benjjneb.github.io/dada2/tutorial.html and https://benjjneb.github.io/dada2/bigdata_paired.html with minor adjustments.  This report captures all the workflow steps necessary to reproduce the analysis.
+
+<br>
+
+## Load R packages:  
+```{r load_packages, echo=FALSE}
+# load packages
+library(dada2); packageVersion("dada2")
+library(ggplot2)
+library(msa)
+library(gridExtra)
+library(phangorn)
+library(stringr)
+library("Biostrings")
+library(dplyr)
+library(tibble)
+
+pool.samples
+# Helper function for breaking long strings in PDFs, e.g. filepaths:
+str_break = function(x, width = 80L) {
+  n = nchar(x)
+  if (n <= width) return(x)
+  n1 = seq(1L, n, by = width)
+  n2 = seq(width, n, by = width)
+  if (n %% width != 0) n2 = c(n2, n)
+  substring(x, n1, n2)
+}
+
+# Helper function to replace NAs in taxonomy assignment table with prefix corresponding to tax rank
+replaceNA.in.assignedTaxonomy <- 
+  function( tax.table ) {
+    prefix <- c( 'k__', 'p__', 'c__', 'o__', 'f__', 'g__', 's__' )
+    
+    for( i in 1 : length( colnames( tax.table ) ) ) {
+      tax.table[ ,i ] <- 
+        ifelse( is.na(tax.table[ ,i ] ), 
+                prefix[i],
+                tax.table[ ,i ]
+        )
+    }
+    rm(i)
+    return( tax.table )
+  }
+
+# print filepath
+cat( str_break( getwd() ), sep = "\n" )
+```
+
+
+<br>
+
+## Get list of input fastq files.
+```{r get_sample_names}
+
+# Variable "input.path" containing path to input fastq files directory 
+# is inherited from wrapper script dada2_cli.r.
+
+input.file.list <- grep( "*fastq", list.files( input.path ), value = T )
+#input.path <- normalizePath("input/")
+
+# List of input files
+
+# Sort ensures forward/reverse reads are in same order
+fnFs <- sort(grep( "_R1.*\\.fastq", list.files(input.path), value = T ) )
+
+fnRs <- sort(grep( "_R2.*\\.fastq", list.files(input.path), value = T ) )
+
+# Extract sample names, allowing variable filenames; e.g. *_R1[_001].fastq[.gz]
+sample.names <- gsub( "_R1.*\\.fastq(\\.gz)?", "", fnFs, perl = T)
+sample.namesR <- gsub( "_R2.*\\.fastq(\\.gz)?", "", fnRs, perl = T)
+if(!identical(sample.names, sample.namesR)) stop("Forward and reverse files do not match.")
+
+tmp.path <- paste(input.path, "/tmp", sep="")
+tmp.path
+dir.create(tmp.path, recursive = TRUE)
+for (p in fnFs){
+    q <- gsub("_R1.fastq","_R2.fastq",p)
+    s_name <- basename(p)
+    s_name
+    system( paste( "vsearch -fastq_mergepairs ", input.path, "/", p, " --reverse ", input.path, "/", q, " -fastqout ", tmp.path, "/", s_name, " --relabel @", sep=""))
+}
+
+fnFs_new <- sort(grep( "_R1.*\\.fastq", list.files(tmp.path), value = T ) )
+fnFs_final <- file.path(tmp.path, fnFs_new)
+
+fnFs_final
+
+```
+
+<br>
+
+
+## Generate quality plots for merged reads and store in Read_QC folder.
+```{r read_quality_plots}
+# Create output folder
+# NOTE: variable 'output.dir' containing name of output folder is 
+# inherited from wrapper script dada2_wrapper.r.
+cwd <- getwd()
+
+readQC.folder <- file.path(cwd, output.dir, "Read_QC")
+ifelse(!dir.exists(readQC.folder), dir.create(readQC.folder, recursive = TRUE), FALSE)
+
+# Generate plots and save to folder in multi-page pdf
+
+# Forward reads
+fwd.qc.plots.list <- list()
+for( i in 1 : length(fnFs_final)) {
+  fwd.qc.plots.list[[i]] <- plotQualityProfile(fnFs_final[i])
+  rm(i)
+}
+# Save to file
+pdf(paste0(readQC.folder,"/Merged_read_plot.pdf"), onefile = TRUE)
+marrangeGrob( fwd.qc.plots.list, ncol=2, nrow=3, top = NULL )
+dev.off()
+rm(fwd.qc.plots.list)
+```
+
+<br>
+
+## Trim and filter reads.
+```{r read_QC}
+
+# Create filtered_input/ subdirectory for storing filtered fastq reads
+filt_path <- file.path(cwd, output.dir, "filtered_input") 
+ifelse(!dir.exists(filt_path), dir.create(filt_path, recursive = TRUE), FALSE)
+
+# Define filenames for filtered input files
+filtFs <- file.path(filt_path, paste0(sample.names, "_F_filt.fastq.gz"))
+
+fnFs.noprimer <- file.path(filt_path, paste0(sample.names, "noprimer_F_filt.fastq.gz"))
+
+# remove primers
+if(!is.null(Fwd_pr) & !is.null(Rvs_pr)) {
+  removePrimers(fnFs_final, fnFs.noprimer, primer.fwd=Fwd_pr, primer.rev=rc(Rvs_pr), trim.fwd = TRUE,trim.rev = TRUE, orient=TRUE, verbose=TRUE)
+} else {
+  fnFs.noprimer <- fnFs_final
+}
+# Filter the forward and reverse reads:
+# Note that:
+# 1. Reads are both truncated and then filtered using the maxEE expected errors algorighm from UPARSE.
+# 2. Reverse reads are truncated to shorter lengths than forward since they are much lower quality.
+# 3. _Both_ reads must pass for the read pair to be output.
+# 4. Output files are compressed by default.
+
+rd.counts <- as.data.frame(
+  filterAndTrim(fnFs.noprimer, filtFs, truncLen=240,
+              maxN=0, maxEE=1, truncQ=10, rm.phix=TRUE,
+              compress=TRUE, multithread=TRUE) 
+)
+# Table of before/after read counts
+rd.counts$ratio <- round( rd.counts$reads.out / rd.counts$reads.in, digits = 2 )
+rd.counts
+
+# Write rd.counts table to file in readQC.folder
+write.table( rd.counts, paste0( readQC.folder, "/Read_counts_after_filtering.tsv" ), sep = "\t", quote = F, eol = "\n", col.names = NA )
+```
+
+<br>
+
+## Learn the error rates.
+The DADA2 algorithm depends on a parametric error model (err) and every amplicon dataset has a different set of error rates. The  learnErrors method learns the error model from the data, by alternating estimation of the error rates and inference of sample composition until they converge on a jointly consistent solution. As in many optimization problems, the algorithm must begin with an initial guess, for which the maximum possible error rates in this data are used (the error rates if only the most abundant sequence is correct and all the rest are errors).
+
+```{r Learn_errors}
+set.seed(100)
+# Filtered forward reads
+errF <- learnErrors(filtFs, nread=1e6, multithread=TRUE)
+
+# Visualize the estimated error rates
+# Forward
+#plotErrors(errF, nominalQ=TRUE)
+# Save to file 
+ggsave(paste0(readQC.folder,"/Error_rates_per_sample_single.pdf"), plotErrors(errF, nominalQ=TRUE) , device = "pdf")
+# Reverse
+#plotErrors(errR, nominalQ=TRUE)
+```
+
+<br>
+
+The error rates for each possible transition (eg. A->C, A->G, …) are shown. Points are the observed error rates for each consensus quality score. The black line shows the estimated error rates after convergence. The red line shows the error rates expected under the nominal definition of the Q-value. If the black line (the estimated rates) fits the observed rates well, and the error rates drop with increased quality as expected, then everything looks reasonable and can proceed with confidence.
+
+<br>
+
+<br>
+
+## Infer Sequence Variants
+This step consists of dereplication, sample inference, and merging of paired reads
+
+<br>
+
+Dereplication combines all identical sequencing reads into into “unique sequences” with a corresponding “abundance”: the number of reads with that unique sequence. DADA2 retains a summary of the quality information associated with each unique sequence. The consensus quality profile of a unique sequence is the average of the positional qualities from the dereplicated reads. These quality profiles inform the error model of the subsequent denoising step, significantly increasing DADA2’s accuracy.
+
+<br>
+
+The sample inference step performs the core sequence-variant inference algorithm to the dereplicated data.
+
+<br>
+
+Spurious sequence variants are further reduced by merging overlapping reads. The core function here is mergePairs, which depends on the forward and reverse re.samples being in matching order at the time they were dereplicated.
+
+<br>
+```{r Infer_variants}
+# Sample inference of dereplicated reads, and merger of paired-end reads
+mergers <- vector("list", length(sample.names))
+names(mergers) <- sample.names
+names(filtFs) <- sample.names
+for(sam in sample.names) {
+  cat("Processing:", sam, "\n")
+    derepF <- derepFastq(filtFs[[sam]])
+    ddF <- dada(derepF, err=errF, multithread=TRUE)
+    mergers[[sam]] <- ddF
+}
+rm(derepF)
+```
+
+## Construct sequence table
+We can now construct a “sequence table” of our samples, a higher-resolution version of the “OTU table” produced by classical methods:
+```{r Construct_seq_table}
+seqtab <- makeSequenceTable(mergers)
+dim(seqtab)
+# Inspect distribution of sequence lengths
+table(nchar(getSequences(seqtab)))
+# The sequence table is a matrix with rows corresponding to (and named by) the samples, and columns corresponding to (and named by) the sequence variants. 
+```
+
+<br>
+
+## Remove chimeras
+The core dada method removes substitution and indel errors, but chimeras remain. Fortunately, the accuracy of the sequences after denoising makes identifying chimeras simpler than it is when dealing with fuzzy OTUs: all sequences which can be exactly reconstructed as a bimera (two-parent chimera) from more abundant sequences.
+
+```{r Remove_chimeras}
+# Remove chimeric sequences:
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+
+dim(seqtab.nochim)
+# ratio of chimeric sequence reads
+1 - sum(seqtab.nochim)/sum(seqtab)
+
+# write sequence variants count table to file
+write.table( t(seqtab.nochim), paste0( output.dir, "/all_samples_SV-counts.tsv"), sep = "\t", eol = "\n", quote = F, col.names = NA )
+# write OTU table to file
+saveRDS(seqtab.nochim, paste0( output.dir, "/seqtab_final.rds") )
+```
+
+<br>
+
+__IMPORTANT:__ Most of your __reads__ should remain after chimera removal (it is not uncommon for a majority of __sequence variants__ to be removed though). If most of your reads were removed as chimeric, upstream processing may need to be revisited. In almost all cases this is caused by primer sequences with ambiguous nucleotides that were not removed prior to beginning the DADA2 pipeline.
+ 
+<br>
+
+## Track reads through the pipeline
+As a final check of the progress, look at the number of reads that made it through each step in the pipeline. This is a great place to do a last sanity check. Outside of filtering (depending on how stringent you want to be) there should no step in which a majority of reads are lost. If a majority of reads failed to merge, you may need to revisit the  truncLen parameter used in the filtering step and make sure that the truncated reads span your amplicon. If a majority of reads failed to pass the chimera check, you may need to revisit the removal of primers, as the ambiguous nucleotides in unremoved primers interfere with chimera identification.
+ 
+<br>
+
+```{r Track_reads_table}
+getN <- function(x) sum(getUniques(x))
+track <- cbind(rd.counts, sapply(mergers, getN), rowSums(seqtab), rowSums(seqtab.nochim))
+colnames(track) <- c("input", "filtered", "ratio", "single", "tabled", "nonchim")
+rownames(track) <- sample.names
+# print table
+track
+# save to file
+write.table( track, paste0( readQC.folder, "/Read_counts_at_each_step.tsv" ), sep = "\t", quote = F, eol = "\n", col.names = NA )
+
+# rename fasta header and write to file
+library(dplyr)
+seqtab.nochim_trans <- as.data.frame(t(seqtab.nochim)) %>% rownames_to_column(var = "sequence") %>% 
+    rowid_to_column(var = "OTUNumber") %>% mutate(OTUNumber = sprintf("otu%04d", 
+    OTUNumber)) %>% mutate(sequence = str_replace_all(sequence, "(-|\\.)", ""))
+
+df <- seqtab.nochim_trans
+seq_out <- Biostrings::DNAStringSet(df$sequence)
+
+names(seq_out) <- df$OTUNumber
+
+Biostrings::writeXStringSet(seq_out, str_c(output.dir, "/ASV_rep_no_tax.fasta"), 
+    compress = FALSE, width = 20000)
+
+```
+
+<br>
+
+## Align sequences and reconstruct phylogeny
+Multiple sequence alignment of resolved sequence variants is used to generate a phylogenetic tree, which is required for calculating UniFrac beta-diversity distances between microbiome samples.
+
+```{r Phylogeny}
+# Get sequences
+seqs <- getSequences(seqtab.nochim)
+names(seqs) <- seqs # This propagates to the tip labels of the tree
+# Multiple seqeuence alignment
+mult <- msa(seqs, method="ClustalOmega", type="dna", order="input")
+# Save msa to file; convert first to phangorn object
+phang.align <- as.phyDat(mult, type="DNA", names=getSequences(seqtab.nochim))
+write.phyDat(phang.align, format = 'fasta', file = paste0( output.dir,"/msa.fasta") )
+
+# Call FastTree (via 'system') to reconstruct phylogeny
+if(unname(Sys.info()["sysname"]) == "Linux") {
+  system( paste( "../dependencies/FastTreeMP_Linux -gtr -nt ", output.dir, "/msa.fasta > ", output.dir, "/FastTree.tre", sep = '' ) )
+} else {
+  system( paste( "../dependencies/FastTreeMP_Darwin -gtr -nt ", output.dir, "/msa.fasta > ", output.dir, "/FastTree.tre", sep = '' ) )
+}
+
+detach("package:phangorn", unload=TRUE)
+detach("package:msa", unload=TRUE)
+```
+
+<br>
+
+## Assign taxonomy
+
+The assignTaxonomy function takes a set of sequences and a training set of taxonomically classified sequences, and outputs the taxonomic assignments with at least minBoot bootstrap confidence. Formatted training datasets for taxonomic assignments can be downloaded from here https://benjjneb.github.io/dada2/training.html.
+
+`assignTaxonomy( ... )` implements the RDP naive Bayesian classifier method described in Wang et al. 2007. In short, the kmer profile of the sequences to be classified are compared against the kmer profiles of all sequences in a training set of sequences with assigned taxonomies. The reference sequence with the most similar profile is used to assign taxonomy to the query sequence, and then a bootstrapping approach is used to assess the confidence assignment at each taxonomic level. The return value of assignTaxonomy(...) is a character matrix, with each row corresponding to an input sequence, and each column corresponding to a taxonomic level.
+
+```{r Greengenes_taxonomy}
+# Assign taxonomy:
+taxa.gg13_8 <- assignTaxonomy(seqtab.nochim, "../reference_dbs_16S/gg_13_8_train_set_97.fa.gz", multithread=TRUE, tryRC=TRUE)
+
+# Print first 6 rows of taxonomic assignment
+unname(head(taxa.gg13_8))
+
+# Replace NAs in taxonomy assignment table with prefix corresponding to tax rank
+taxa.gg13_8.2 <- replaceNA.in.assignedTaxonomy( taxa.gg13_8 )
+
+# Write taxa table to file
+write.table( taxa.gg13_8.2, paste0( output.dir, "/all_samples_GG13-8-taxonomy.tsv" ), sep = "\t", eol = "\n", quote = F, col.names = NA )
+```
+
+## Merge OTU and GG13-8 taxonomy tables
+```{r Merge_GG_and_count_tables}
+otu.gg.tax.table <- merge( t(seqtab.nochim), taxa.gg13_8.2, by = 'row.names' )
+rownames( otu.gg.tax.table ) <- otu.gg.tax.table[,1]
+otu.gg.tax.table <- otu.gg.tax.table[,-1]
+
+write.table(otu.gg.tax.table, paste0( output.dir, "/all_samples_SV-counts_and_GG13-8-taxonomy.tsv" ), sep = "\t", eol = "\n", quote = F, col.names = NA)
+```
+
+<br>
+
+For RDP and Silva, taxonomic assignment to species level is a two-step process. Fast and appropriate species-level assignment from 16S data is provided by the `assignSpecies( ... )` method. `assignSpecies( ... )` uses exact string matching against a reference database to assign Genus species binomials. In short, query sequence are compared against all reference sequences that had binomial genus-species nomenclature assigned, and the genus-species of all exact matches are recorded and returned if it is unambiguous. 
+
+The convenience function `addSpecies( ... )` takes as input a taxonomy table, and outputs a table with an added species column. Only those genus-species binomials which are consistent with the genus assigned in the provided taxonomy table are retained in the output. See here for more on taxonomic assignment https://benjjneb.github.io/dada2/assign.html.
+
+<br>
+
+## Asign SILVA and RDP taxonomies and merge with OTU table
+```{r SILVA_and_RDP_taxonomy}
+# Assign SILVA taxonomy
+taxa.silva <- assignTaxonomy(seqtab.nochim, "../reference_dbs_16S/silva_nr_v128_train_set.fa.gz", multithread = TRUE)
+
+# Replace NAs in taxonomy assignment table with prefix corresponding to tax rank
+taxa.silva.2 <- replaceNA.in.assignedTaxonomy( taxa.silva )
+
+# OMIT APPENDING SPECIES FOR SILVA DUE TO MEMORY CONSTRAINTS
+# Append species. Note that appending the argument 'allowMultiple=3' will return up to 3 different matched
+# species, but if 4 or more are matched it returns NA.
+#taxa.silva.species <- addSpecies(taxa.silva, "/n/huttenhower_lab/data/dada2_reference_databases/silva_species_assignment_v128.fa.gz")
+
+# Merge with OTU table and save to file
+otu.silva.tax.table <- merge( t(seqtab.nochim), taxa.silva.2, by = 'row.names' )
+rownames( otu.silva.tax.table ) <- otu.silva.tax.table[,1]
+otu.silva.tax.table <- otu.silva.tax.table[,-1]
+
+write.table(otu.silva.tax.table, paste0( output.dir, "/all_samples_SV-counts_and_SILVA-taxonomy.tsv" ), sep = "\t", eol = "\n", quote = F, col.names = NA)
+
+# Assign RDP taxonomy
+taxa.rdp <- assignTaxonomy(seqtab.nochim, "../reference_dbs_16S/rdp_train_set_18.fa.gz", multithread = TRUE)
+
+# Replace NAs in taxonomy assignment table with prefix corresponding to tax rank
+taxa.rdp.2 <- replaceNA.in.assignedTaxonomy( taxa.rdp )
+
+# OMIT APPENDING SPECIES FOR RDP DUE TO MEMORY CONSTRAINTS
+# Append species. Note that appending the argument 'allowMultiple=3' will return up to 3 different matched
+# species, but if 4 or more are matched it returns NA.
+#taxa.rdp.species <- addSpecies(taxa.rdp, "/n/huttenhower_lab/data/dada2_reference_databases/rdp_species_assignment_16.fa.gz")
+
+
+# Merge with OTU table and save to file
+otu.rdp.tax.table <- merge( t(seqtab.nochim), taxa.rdp.2, by = 'row.names' )
+rownames( otu.rdp.tax.table ) <- otu.rdp.tax.table[,1]
+otu.rdp.tax.table <- otu.rdp.tax.table[,-1]
+# extract representative sequences and save to file
+
+write.table(otu.rdp.tax.table, paste0( output.dir, "/all_samples_SV-counts_and_RDP-taxonomy.tsv" ), sep = "\t", eol = "\n", quote = F, col.names = NA)
+```
+
+
+\newpage
+Session Info:
+```{r SessionInfo} 
+sessionInfo()
+```

@@ -18,14 +18,24 @@ this pipeline is extensively tested under conda R version 4.0.2 on both MacOS an
 git clone https://github.com/jianshu93/dada2_wrapper
 cd dada2_wrapper/scripts
 
-#### pool mode
-time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output --pool
-#### pool mode for forward reads only
-time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output --pool --single
+#### Pair end model, default
+time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output_paired --pool
+#### Forward reads only, single mode, if you have primer you only need to provide the forward primer on forward reads with --forward="..."
+time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output_single --pool --single
 
 ### if you provider primers directly to the wrapper, we can also work it out. But it's slower than cutadapt. Therefore, I still suggest that you use cutadapt first. If you are lasy, you can just do it here. It takes about another 15 minutes to cut primers, very slow compare to cutadapt.
 
-time Rscript ./dada2_wrapper.r --input_dir=/storage/home/hcoda1/4/jzhao399/p-ktk3-0/rich_project_bio-konstantinidis/salt_marsh/DADA2_workshop/raw_sequences --output_dir=output1 --pool --forward=GTGCCAGCMGCCGCGGTAA --reverse=GGACTACHVGGGTWTCTAAT
+time Rscript ./dada2_wrapper.r --input_dir=output_paired_primer --output_dir=output1 --pool --forward=GTGCCAGCMGCCGCGGTAA --reverse=GGACTACHVGGGTWTCTAAT
+
+### merged mode, merge reads first and then infer based on merged reads using single mode (vsearch with gzip support is need here, script will install vserach from conda automatically if you do not have it. Use the latest 15.2 version)
+time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output_merged --pool --merge
+
+### Or merged mode with primer
+
+time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output_merged --pool --merge --forward=GTGCCAGCMGCCGCGGTAA --reverse=GGACTACHVGGGTWTCTAAT
+
+
+
 
 
 ```
@@ -139,6 +149,9 @@ Hsieh, T. C., Ma, K. H., & Chao, A. (2016). iNEXT: an R package for rarefaction 
 
 Shenhav, L., Thompson, M., Joseph, T. A., Briscoe, L., Furman, O., Bogumil, D., et al. (2019). FEAST: fast expectation-maximization for microbial source tracking. Nature Methods, 1–10. http://doi.org/10.1038/s41592-019-0431-x 
 
+Edgar, R. C., & Flyvbjerg, H. (2015). Error filtering, pair assembly and error correction for next-generation sequencing reads. Bioinformatics, 1–7. http://doi.org/10.1093/bioinformatics/btv401/-/DC1
+
+Rognes, T., Flouri, T., Ben Nichols, Quince, C., & Mahé, F. (2016). VSEARCH: a versatile open source tool for metagenomics. PeerJ, 4(17), e2584–22. http://doi.org/10.7717/peerj.2584
 
 
 
