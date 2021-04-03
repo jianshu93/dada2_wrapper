@@ -65,6 +65,12 @@ if( any( grepl("--single", args) ) ) {
   args <- c(args, "--single=FALSE")
 }
 
+if( any( grepl("--merge", args) ) ) {
+  args <- gsub( "--merge", "--merge=TRUE", args)
+} else {
+  args <- c(args, "--merge=FALSE")
+}
+
 if( any( grepl("--diversity", args) ) ) {
   args <- gsub( "--diversity", "--diversity=TRUE", args)
 } else {
@@ -119,10 +125,7 @@ dir.create(output.dir)
 }
 
 pool.samples <- args.list$pool
-pool.samples
-
 diversity.samples <- args.list$diversity
-diversity.samples
 
 # Run dada2 Rmarkdown workflow and output report using Rmarkdown
 
@@ -135,26 +138,43 @@ if(args.list$single == "TRUE") {
       if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
     }
     library(devtools)
-    devtools::install_github("cozygene/FEAST")
     devtools::install_github("vmikk/metagMisc")
     rmarkdown::render("Diversity.Rmd",
                   output_file = paste( output.dir, "/16Sreport_diversity_single", Sys.Date(), ".pdf", sep=''))
   }
 } else {
-  rmarkdown::render("dada2_16S_paired-end.Rmd",
+  if(args.list$merge == "FALSE"){
+    rmarkdown::render("dada2_16S_paired-end.Rmd",
                   output_file = paste( output.dir, "/16Sreport_dada2_pair", Sys.Date(), ".pdf", sep=''))
-  if(args.list$diversity == "TRUE") {
-    requiredPackages = c('GUniFrac','devtools','phyloseq','vegan','iNEXT')
-    for(p in requiredPackages){
-      if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
-    }
-    library(devtools)
-    devtools::install_github("vmikk/metagMisc")
-    rmarkdown::render("Diversity.Rmd",
+    if(args.list$diversity == "TRUE") {
+      requiredPackages = c('GUniFrac','devtools','phyloseq','vegan','iNEXT')
+      for(p in requiredPackages){
+        if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
+      }
+      library(devtools)
+      devtools::install_github("vmikk/metagMisc")
+      rmarkdown::render("Diversity.Rmd",
                   output_file = paste( output.dir, "/16Sreport_diversity_pair", Sys.Date(), ".pdf", sep=''))     
+    } 
+  } else {
+    if(Sys.which("vsearch") == "") {
+      system("conda install vsearch")
+    }     
+    rmarkdown::render("dada2_16S_merged.Rmd",
+                  output_file = paste( output.dir, "/16Sreport_dada2_merge", Sys.Date(), ".pdf", sep=''))
+    if(args.list$diversity == "TRUE") {
+      requiredPackages = c('GUniFrac','devtools','phyloseq','vegan','iNEXT')
+      for(p in requiredPackages){
+        if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
+      }
+      library(devtools)
+      devtools::install_github("vmikk/metagMisc")
+      rmarkdown::render("Diversity.Rmd",
+                  output_file = paste( output.dir, "/16Sreport_diversity_single", Sys.Date(), ".pdf", sep=''))
     }
   }
 }
+
 
 if(args.list$feast = "TRUE") {
   requiredPackages = c("Rcpp", "RcppArmadillo", "vegan", "dplyr", "reshape2", "gridExtra", "ggplot2", "ggthemes")
@@ -170,12 +190,3 @@ if(args.list$feast = "TRUE") {
                   output_file = paste( output.dir, "/16S_report_MST_FEAST_pair", Sys.Date(), ".pdf", sep=''))
   }
 }
-
-
-
-
-
-
-
-
-
