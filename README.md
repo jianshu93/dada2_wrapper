@@ -6,9 +6,9 @@ DADA2 R workflow for profiling 16S sequence reads
 
 * Primer removal
 
-Before you start, make sure that you remove all the primers in the forwared and 
+Before you start, I suggest you remove all the primers in the forwared and 
 reverse reads. There is a bash script based on cutadapt software in the demo_input 
-directory (run in this directory only), run it will remoe primers for the forward and reverse reads. The primer is now set to universal 16S V3-V4 primer set 515F and 806R. Change the -a and -A option in the cut_primer.sh to your primer used during the amplification experiment. The demo_input reads contains no primer
+directory (run in this directory only), run it will remove primers for the forward and reverse reads. The primer is now set to universal 16S V3-V4 primer set 515F and 806R. Change the -a and -A option in the cut_primer.sh to your primer used during the amplification experiment. The demo_input reads contains no primer. You can also remove primer in this script by providing to it via --forward= and --reverse=
 
 # IMPORTANT
 this pipeline is extensively tested under conda R version 4.0.2 on both MacOS and Linux (Ubuntu 18.0.4 and RHEL 7). I strongly suggest you reinstall a new R 4.0.2 from scratch but not update R in you conda. INSTALL A COMPLETELY NEW R 4.0.2! This will save you lot of trouble (updating R packages from an old version to a new one is annoying) 

@@ -35,6 +35,8 @@ library("Biostrings")
 library(dplyr)
 library(tibble)
 library(parallel)
+library(Rcpp)
+library(RcppParallel)
 ### variables inherited from main script
 Fwd_pr
 Rvs_pr
@@ -156,7 +158,7 @@ if(!is.null(Fwd_pr)) {
 rd.counts <- as.data.frame(
   filterAndTrim(fnFs.noprimer, filtFs, truncLen=225,
               maxN=0, maxEE=1, truncQ=10, rm.phix=TRUE,
-              compress=TRUE, multithread=TRUE) 
+              compress=TRUE, multithread=threads) 
 )
 # Table of before/after read counts
 rd.counts$ratio <- round( rd.counts$reads.out / rd.counts$reads.in, digits = 2 )
@@ -174,7 +176,7 @@ The DADA2 algorithm depends on a parametric error model (err) and every amplicon
 ```{r Learn_errors}
 set.seed(100)
 # Filtered forward reads
-errF <- learnErrors(filtFs, nread=1e6, multithread=TRUE)
+errF <- learnErrors(filtFs, nread=1e6, multithread=threads)
 
 # Visualize the estimated error rates
 # Forward
@@ -217,7 +219,7 @@ names(filtFs) <- sample.names
 for(sam in sample.names) {
   cat("Processing:", sam, "\n")
     derepF <- derepFastq(filtFs[[sam]])
-    ddF <- dada(derepF, err=errF, multithread=TRUE)
+    ddF <- dada(derepF, err=errF, multithread=threads)
     mergers[[sam]] <- ddF
 }
 rm(derepF)
@@ -240,7 +242,7 @@ The core dada method removes substitution and indel errors, but chimeras remain.
 
 ```{r Remove_chimeras}
 # Remove chimeric sequences:
-seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=threads, verbose=TRUE)
 
 dim(seqtab.nochim)
 # ratio of chimeric sequence reads
@@ -325,7 +327,7 @@ The assignTaxonomy function takes a set of sequences and a training set of taxon
 
 ```{r Greengenes_taxonomy}
 # Assign taxonomy:
-taxa.gg13_8 <- assignTaxonomy(seqtab.nochim, "../reference_dbs_16S/gg_13_8_train_set_97.fa.gz", multithread=TRUE, tryRC=TRUE)
+taxa.gg13_8 <- assignTaxonomy(seqtab.nochim, "../reference_dbs_16S/gg_13_8_train_set_97.fa.gz", multithread=threads, tryRC=TRUE)
 
 # Print first 6 rows of taxonomic assignment
 unname(head(taxa.gg13_8))
@@ -357,7 +359,7 @@ The convenience function `addSpecies( ... )` takes as input a taxonomy table, an
 ## Asign SILVA and RDP taxonomies and merge with OTU table
 ```{r SILVA_and_RDP_taxonomy}
 # Assign SILVA taxonomy
-taxa.silva <- assignTaxonomy(seqtab.nochim, "../reference_dbs_16S/silva_nr_v128_train_set.fa.gz", multithread = TRUE)
+taxa.silva <- assignTaxonomy(seqtab.nochim, "../reference_dbs_16S/silva_nr_v128_train_set.fa.gz", multithread = threads)
 
 # Replace NAs in taxonomy assignment table with prefix corresponding to tax rank
 taxa.silva.2 <- replaceNA.in.assignedTaxonomy( taxa.silva )
@@ -375,7 +377,7 @@ otu.silva.tax.table <- otu.silva.tax.table[,-1]
 write.table(otu.silva.tax.table, paste0( output.dir, "/all_samples_SV-counts_and_SILVA-taxonomy.tsv" ), sep = "\t", eol = "\n", quote = F, col.names = NA)
 
 # Assign RDP taxonomy
-taxa.rdp <- assignTaxonomy(seqtab.nochim, "../reference_dbs_16S/rdp_train_set_18.fa.gz", multithread = TRUE)
+taxa.rdp <- assignTaxonomy(seqtab.nochim, "../reference_dbs_16S/rdp_train_set_18.fa.gz", multithread = threads)
 
 # Replace NAs in taxonomy assignment table with prefix corresponding to tax rank
 taxa.rdp.2 <- replaceNA.in.assignedTaxonomy( taxa.rdp )
