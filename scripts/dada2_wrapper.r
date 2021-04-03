@@ -35,7 +35,7 @@ if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager",repos='http://cran.us.r-project.org')
 library(BiocManager)
   ### check if packages exists and then install packages that does not exist
-requiredPackages = c('dplyr','RCurl','mgcv','ggplot2','tibble','GenomicRanges','SummarizedExperiment',
+requiredPackages = c('parallel','dplyr','RCurl','mgcv','ggplot2','tibble','GenomicRanges','SummarizedExperiment',
                     'BiocParallel','Rsamtools','dada2','msa','phangorn','gridExtra','rmarkdown','knitr')
 for(p in requiredPackages){
   if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)

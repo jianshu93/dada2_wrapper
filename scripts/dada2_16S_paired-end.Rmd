@@ -34,20 +34,18 @@ library(stringr)
 library("Biostrings")
 library(dplyr)
 library(tibble)
-
+library(parallel)
 ### variables inherited from main script
-pool.samples
 Fwd_pr
 Rvs_pr
-
+threads <- detectCores()
 
 ### set DADA2 variables
 getDadaOpt()
-
 setDadaOpt(OMEGA_A = 1e-40)
 setDadaOpt(MATCH=5, MISMATCH=-4, GAP_PENALTY=-8)
 setDadaOpt(GREEDY=TRUE, GAPLESS=TRUE)
-
+setThreadOptions(numThreads = threads)
 
 # Helper function for breaking long strings in PDFs, e.g. filepaths:
 str_break = function(x, width = 80L) {

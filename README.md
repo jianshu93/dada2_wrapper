@@ -52,8 +52,8 @@ DADA2 R workflow for profiling 16S sequence reads consists of these 4 scripts:
   NOTE: Currently, the wrapper script dada2_wrapper.r and the workflow dada2_16S_paired-end.Rmd need to be in the same directory (and not in the input directory). By default the database is at the parent directory of the script dada2_wrapper.r, which is: ../reference_dbs_16S
 
 #### 3.dada2_16S_single_end.Rmd - DADA2 workflow for single end 16S amplicon reads. It is very similar to the pair end version but only use forwared reads in the directory (*R1*.fastq). Please name you reads file with *R1* if you have only single end reads data 
-
-#### 4. Diversity.Rmd - Diversity module that calculate both alpha and beta diversity using various metric such as chao1, bray-curtis, unifrac
+#### 4.dada2_16S_merged.Rmd - DADA2 workflow for merged reads. Merged reads first using vsearch -fastq_mergepairs and then run single mode.
+#### 5. Diversity.Rmd - Diversity module that calculate both alpha and beta diversity using various metric such as chao1, bray-curtis, unifrac
 
 It is suggested that the pool mode is more sensitive than sample-based mode for detecting rare ASVs (http://fiererlab.org/2020/02/17/whats-in-a-number-estimating-microbial-richness-using-dada2/)
 
@@ -149,7 +149,7 @@ Hsieh, T. C., Ma, K. H., & Chao, A. (2016). iNEXT: an R package for rarefaction 
 
 Shenhav, L., Thompson, M., Joseph, T. A., Briscoe, L., Furman, O., Bogumil, D., et al. (2019). FEAST: fast expectation-maximization for microbial source tracking. Nature Methods, 1–10. http://doi.org/10.1038/s41592-019-0431-x 
 
-Edgar, R. C., & Flyvbjerg, H. (2015). Error filtering, pair assembly and error correction for next-generation sequencing reads. Bioinformatics, 1–7. http://doi.org/10.1093/bioinformatics/btv401/-/DC1
+Edgar, R. C., & Flyvbjerg, H. (2015). Error filtering, pair assembly and error correction for next-generation sequencing reads. Bioinformatics, 1–7. http://doi.org/10.1093/bioinformatics/btv401
 
 Rognes, T., Flouri, T., Ben Nichols, Quince, C., & Mahé, F. (2016). VSEARCH: a versatile open source tool for metagenomics. PeerJ, 4(17), e2584–22. http://doi.org/10.7717/peerj.2584
 
