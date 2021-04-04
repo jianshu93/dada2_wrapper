@@ -115,9 +115,7 @@ for (p in fnFs){
 
 fnFs_new <- sort(grep( "_R1.*\\.fastq", list.files(tmp.path), value = T ) )
 fnFs_final <- file.path(tmp.path, fnFs_new)
-
 fnFs_final
-
 ```
 
 <br>
@@ -196,7 +194,7 @@ The DADA2 algorithm depends on a parametric error model (err) and every amplicon
 ```{r Learn_errors}
 set.seed(100)
 # Filtered forward reads
-errF <- learnErrors(filtFs, nread=1e6, multithread=threads)
+errF <- learnErrors(filtFs, nread=1e6, multithread=threads,randomize=TRUE)
 
 # Visualize the estimated error rates
 # Forward
@@ -233,15 +231,24 @@ Spurious sequence variants are further reduced by merging overlapping reads. The
 <br>
 ```{r Infer_variants}
 # Sample inference of dereplicated reads, and merger of paired-end reads
-mergers <- vector("list", length(sample.names))
-names(mergers) <- sample.names
-names(filtFs) <- sample.names
-for(sam in sample.names) {
-  cat("Processing:", sam, "\n")
-    derepF <- derepFastq(filtFs[[sam]])
-    ddF <- dada(derepF, err=errF, multithread=threads)
-    mergers[[sam]] <- ddF
+print(paste("dada() starts at",Sys.time, sep = " "))
+if(!pool.samples == "TRUE") {
+  mergers <- vector("list", length(sample.names))
+  names(mergers) <- sample.names
+  names(filtFs) <- sample.names
+  for(sam in sample.names) {
+    cat("Processing:", sam, "\n")
+      derepF <- derepFastq(filtFs[[sam]])
+      ddF <- dada(derepF, err=errF, multithread=threads)
+      mergers[[sam]] <- ddF
+  }
+} else {
+  derepFs <- derepFastq(filtFs, verbose=TRUE)
+  names(derepFs) <- sample.names
+  dadaFs <- dada(derepFs, err=errF, multithread=threads, pool=TRUE)
+  mergers <- dadaFs
 }
+print(paste("dada() finishes at",Sys.time, sep = " "))
 rm(derepF)
 ```
 
