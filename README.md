@@ -25,7 +25,7 @@ time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output_pai
 #### Forward reads only, single mode, if you have primer you only need to provide the forward primer on forward reads with --forward="..."
 time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output_single --pool --single --threads=4
 
-### if you provider primers directly to the wrapper, we can also work it out. But it's slower than cutadapt. Therefore, I still suggest that you use cutadapt first. If you are lasy, you can just do it here. It takes about another 15 minutes to cut primers, very slow compare to cutadapt.
+### if you provider primers directly to the wrapper, we can also work it out. But it's slower than cutadapt. Therefore, I still suggest that you use cutadapt first. If you are lasy, you can just do it here. It takes about another 15 minutes to cut primers, very slow compare to cutadapt. 
 
 time Rscript ./dada2_wrapper.r --input_dir=output_paired_primer --output_dir=output1 --pool --forward=GTGCCAGCMGCCGCGGTAA --reverse=GGACTACHVGGGTWTCTAAT --threads=4
 
