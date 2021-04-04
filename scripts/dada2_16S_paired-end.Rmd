@@ -40,7 +40,7 @@ library(RcppParallel)
 ### variables inherited from main script
 cat(Fwd_pr)
 cat(Rvs_pr)
-if(!is.null(as.numeric(n_threads)) == "TRUE") {
+if(!is.null(n_threads) == "TRUE") {
   threads <- as.numeric(n_threads)
 } else {
   threads <- detectCores()
