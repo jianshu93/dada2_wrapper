@@ -92,6 +92,7 @@ names(args.list) <- args.df$V1
 
 Fwd_pr <- args.list$forward
 Rvs_pr <- args.list$reverse
+n_threads <- args.list$threads
 
 ## Arg1 default
 if(is.null(args.list$input_dir)) {

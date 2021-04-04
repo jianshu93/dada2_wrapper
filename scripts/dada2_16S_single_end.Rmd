@@ -214,7 +214,7 @@ Spurious sequence variants are further reduced by merging overlapping reads. The
 <br>
 ```{r Infer_variants}
 # Sample inference of dereplicated reads, and merger of paired-end reads
-print(paste("dada() starts at",Sys.time, sep = " "))
+## print(paste("dada() starts at",Sys.time, sep = " "))
 if(!pool.samples == "TRUE") {
   mergers <- vector("list", length(sample.names))
   names(mergers) <- sample.names
@@ -231,7 +231,7 @@ if(!pool.samples == "TRUE") {
   dadaFs <- dada(derepFs, err=errF, multithread=threads, pool=TRUE)
   mergers <- dadaFs
 }
-print(paste("dada() finishes at",Sys.time, sep = " "))
+## print(paste("dada() finishes at",Sys.time, sep = " "))
 rm(derepF)
 ```
 
