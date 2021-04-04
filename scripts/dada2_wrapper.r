@@ -59,7 +59,6 @@ if(Sys.which("conda") == "") {
 if(Sys.which("pandoc") == "") {
   system("conda install pandoc")
 }
-
 ### load libraries
 library("knitr")
 # If sample pooling logical is not provided, then default to FALSE, i.e. for independent analysis of each sample.
