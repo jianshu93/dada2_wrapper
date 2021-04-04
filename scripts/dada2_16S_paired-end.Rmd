@@ -38,11 +38,14 @@ library(parallel)
 library(Rcpp)
 library(RcppParallel)
 ### variables inherited from main script
-Fwd_pr
-Rvs_pr
-pool.samples
-threads <- detectCores()
-
+cat(Fwd_pr)
+cat(Rvs_pr)
+if(!is.null(as.numeric(n_threads)) == "TRUE") {
+  threads <- as.numeric(n_threads)
+} else {
+  threads <- detectCores()
+}
+cat(threads)
 ### set DADA2 variables
 getDadaOpt()
 setDadaOpt(OMEGA_A = 1e-40)
@@ -256,6 +259,8 @@ if(!pool.samples == "TRUE") {
       merger <- mergePairs(ddF, derepF, ddR, derepR)
       mergers[[sam]] <- merger
   }
+  cat(pool.samples)
+  rm(derepF); rm(derepR)
 } else {
   derepFs <- derepFastq(filtFs, verbose=TRUE)
   derepRs <- derepFastq(filtRs, verbose=TRUE)
@@ -264,8 +269,10 @@ if(!pool.samples == "TRUE") {
   dadaFs <- dada(derepFs, err=errF, multithread=threads, pool=TRUE)
   dadaRs <- dada(derepRs, err=errR, multithread=threads, pool=TRUE)
   mergers <- mergePairs(dadaFs, derepFs, dadaRs, derepRs, verbose=TRUE)
+  cat(pool.samples)
+  rm(derepFs); rm(derepRs)
 }
-rm(derepF); rm(derepR)
+
 ```
 
 ## Construct sequence table
