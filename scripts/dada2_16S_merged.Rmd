@@ -75,6 +75,49 @@ replaceNA.in.assignedTaxonomy <-
     return( tax.table )
   }
 
+plot_grid <- function(x, margin = c(1, 1, 1, 1), tags = NULL) {
+  # check package availability -----
+  if (!requireNamespace("gridExtra", quietly = TRUE)) {
+    stop("Package `gridExtra` needed for this function to work. Please install it.", call. = F)
+  }
+
+  # if user did not pass plot.list value, but the complete object returned
+  # by sjPlot-functions, get plot-list then
+  if (!inherits(x, "list") || inherits(x, "sjPlot")) x <- x[["plot.list"]]
+
+  # add margin to each plot, so no axis labels are cropped
+  x <- lapply(x, function(pl) {
+    pl + theme(plot.margin = unit(margin, "cm"))
+  })
+
+  tags_labels <- NULL
+
+  # Add tags
+  if (isTRUE(tags)) {
+    tags_labels = LETTERS
+  } else{
+    if (length(tags) < length(x)) {
+      warning("Not enough tags labels in list. Using letters instead.")
+      tags_labels = LETTERS
+    } else{
+      tags_labels = tags
+    }
+  }
+
+  if (!is.null(tags_labels)) {
+    for (i in 1:length(x)) {
+      x[[i]] <- x[[i]] + labs(tag = tags_labels[i])
+    }
+  }
+
+
+  # compute amount of columns and rows
+  ncol <- round(sqrt(length(x)))
+  nrow <- ceiling(length(x) / ncol)
+
+  f <- eval(bquote(gridExtra::"grid.arrange"))
+  do.call(f, c(x, nrow = nrow, ncol = ncol))
+}
 # print filepath
 cat( str_break( getwd() ), sep = "\n" )
 ```
@@ -143,6 +186,7 @@ for( i in 1 : length(fnFs_final)) {
 pdf(paste0(readQC.folder,"/Merged_read_plot.pdf"), onefile = TRUE)
 marrangeGrob( fwd.qc.plots.list, ncol=2, nrow=3, top = NULL )
 dev.off()
+plot_grid(rev.qc.plots.list)
 rm(fwd.qc.plots.list)
 ```
 
@@ -195,7 +239,7 @@ The DADA2 algorithm depends on a parametric error model (err) and every amplicon
 set.seed(100)
 # Filtered forward reads
 errF <- learnErrors(filtFs, nread=1e6, multithread=threads,randomize=TRUE)
-
+plotErrors(errF, nominalQ=TRUE)
 # Visualize the estimated error rates
 # Forward
 #plotErrors(errF, nominalQ=TRUE)
@@ -231,7 +275,7 @@ Spurious sequence variants are further reduced by merging overlapping reads. The
 <br>
 ```{r Infer_variants}
 # Sample inference of dereplicated reads, and merger of paired-end reads
-print(paste("dada() starts at",Sys.time, sep = " "))
+## print(paste("dada() starts at",Sys.time, sep = " "))
 if(!pool.samples == "TRUE") {
   mergers <- vector("list", length(sample.names))
   names(mergers) <- sample.names
@@ -248,7 +292,7 @@ if(!pool.samples == "TRUE") {
   dadaFs <- dada(derepFs, err=errF, multithread=threads, pool=TRUE)
   mergers <- dadaFs
 }
-print(paste("dada() finishes at",Sys.time, sep = " "))
+### print(paste("dada() finishes at",Sys.time, sep = " "))
 rm(derepF)
 ```
 
