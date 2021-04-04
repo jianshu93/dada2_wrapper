@@ -13,7 +13,7 @@ reverse reads. There is a bash script based on cutadapt software in the demo_inp
 directory (run in this directory only), run it will remove primers for the forward and reverse reads. The primer is now set to universal 16S V3-V4 primer set 515F and 806R. Change the -a and -A option in the cut_primer.sh to your primer used during the amplification experiment. The demo_input reads contains no primer. You can also remove primer in this script by providing to it via --forward= and --reverse=
 
 # IMPORTANT
-This pipeline is extensively tested under conda R version 4.0.2 on both MacOS and Linux (Ubuntu 18.0.4 and RHEL 7). There are known bugs with old R version on conda in terms of compiling R packages. I strongly suggest you reinstall a new R 4.0.2 from scratch but not update R in you conda. INSTALL A COMPLETELY NEW R 4.0.2! This will save you lot of trouble (updating R packages from an old version to a new one is annoying) 
+This pipeline is extensively tested under conda R version 4.0.2 on both MacOS and Linux (Ubuntu 18.0.4 and RHEL 7). There are known bugs with old R version on conda in terms of compiling R packages. I strongly suggest you reinstall a new R 4.0.2 from scratch but not update R in you conda. INSTALL A COMPLETELY NEW R 4.0.2! This will save you lot of trouble (updating R packages from an old version to a new one is annoying). For MacOS, you can installed it here: https://cran.r-project.org/bin/macosx/ or by running conda install r-base=4.0.2 -c conda-forge after installing and activating conda.
 
 # DADA2 can now be run with those command (*_R1.fastq, *_R2.fastq or gzipped formatshould be in the input directory):
 ```
@@ -21,16 +21,16 @@ git clone https://github.com/jianshu93/dada2_wrapper
 cd dada2_wrapper/scripts
 
 #### Pair end model, default
-time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output_paired --pool --threads 4
+time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output_paired --pool --threads=4
 #### Forward reads only, single mode, if you have primer you only need to provide the forward primer on forward reads with --forward="..."
-time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output_single --pool --single --threads 4
+time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output_single --pool --single --threads=4
 
 ### if you provider primers directly to the wrapper, we can also work it out. But it's slower than cutadapt. Therefore, I still suggest that you use cutadapt first. If you are lasy, you can just do it here. It takes about another 15 minutes to cut primers, very slow compare to cutadapt.
 
-time Rscript ./dada2_wrapper.r --input_dir=output_paired_primer --output_dir=output1 --pool --forward=GTGCCAGCMGCCGCGGTAA --reverse=GGACTACHVGGGTWTCTAAT --threads 4
+time Rscript ./dada2_wrapper.r --input_dir=output_paired_primer --output_dir=output1 --pool --forward=GTGCCAGCMGCCGCGGTAA --reverse=GGACTACHVGGGTWTCTAAT --threads=4
 
 ### merged mode, merge reads first and then infer based on merged reads using single mode (vsearch with gzip support is need here, script will install vserach from conda automatically if you do not have it. Use the latest 15.2 version)
-time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output_merged --pool --merge --threads 4
+time Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=output_merged --pool --merge --threads=4
 
 ### Or merged mode with primer
 
