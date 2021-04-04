@@ -201,11 +201,9 @@ The DADA2 algorithm depends on a parametric error model (err) and every amplicon
 ```{r Learn_errors}
 set.seed(100)
 # Filtered forward reads
-print(paste("Error learning starts at",Sys.time, sep = " "))
 errF <- learnErrors(filtFs, nread=1e6, multithread=threads,randomize=TRUE)
 # Filtered reverse reads
 errR <- learnErrors(filtRs, nread=1e6, multithread=threads,randomize=TRUE)
-print(paste("Error learning finishes at",Sys.time, sep = " "))
 
 # Visualize the estimated error rates
 # Forward
@@ -244,7 +242,6 @@ Spurious sequence variants are further reduced by merging overlapping reads. The
 <br>
 ```{r Infer_variants}
 # Sample inference of dereplicated reads, and merger of paired-end reads
-print(paste("dada() starts at",Sys.time, sep = " "))
 if(!pool.samples == "TRUE") {
   mergers <- vector("list", length(sample.names))
   names(mergers) <- sample.names
@@ -268,7 +265,6 @@ if(!pool.samples == "TRUE") {
   dadaRs <- dada(derepRs, err=errR, multithread=threads, pool=TRUE)
   mergers <- mergePairs(dadaFs, derepFs, dadaRs, derepRs, verbose=TRUE)
 }
-print(paste("dada() finishes at",Sys.time, sep = " "))
 rm(derepF); rm(derepR)
 ```
 
@@ -375,7 +371,7 @@ The assignTaxonomy function takes a set of sequences and a training set of taxon
 
 ```{r Greengenes_taxonomy}
 # Assign taxonomy:
-print(paste("Assign taxonomy (Greengene) starts at",Sys.time, sep = " "))
+## print(paste("Assign taxonomy (Greengene) starts at",Sys.time, sep = " "))
 taxa.gg13_8 <- assignTaxonomy(seqtab.nochim, "../reference_dbs_16S/gg_13_8_train_set_97.fa.gz", multithread=threads, tryRC=TRUE)
 
 # Print first 6 rows of taxonomic assignment
@@ -395,7 +391,7 @@ rownames( otu.gg.tax.table ) <- otu.gg.tax.table[,1]
 otu.gg.tax.table <- otu.gg.tax.table[,-1]
 
 write.table(otu.gg.tax.table, paste0( output.dir, "/all_samples_SV-counts_and_GG13-8-taxonomy.tsv" ), sep = "\t", eol = "\n", quote = F, col.names = NA)
-print(paste("Assign taxonomy (Greengene) finishes at",Sys.time, sep = " "))
+## print(paste("Assign taxonomy (Greengene) finishes at",Sys.time, sep = " "))
 ```
 
 <br>
@@ -409,7 +405,7 @@ The convenience function `addSpecies( ... )` takes as input a taxonomy table, an
 ## Asign SILVA and RDP taxonomies and merge with OTU table
 ```{r SILVA_and_RDP_taxonomy}
 # Assign SILVA taxonomy
-print(paste("Assign taxonomy (Silva) starts at",Sys.time, sep = " "))
+## print(paste("Assign taxonomy (Silva) starts at",Sys.time, sep = " "))
 taxa.silva <- assignTaxonomy(seqtab.nochim, "../reference_dbs_16S/silva_nr_v128_train_set.fa.gz", multithread = threads)
 saveRDS(taxa.silva, paste0( output.dir, "/taxa.silva.1.rds") )
 # Replace NAs in taxonomy assignment table with prefix corresponding to tax rank
@@ -427,9 +423,9 @@ otu.silva.tax.table <- otu.silva.tax.table[,-1]
 
 
 write.table(otu.silva.tax.table, paste0( output.dir, "/all_samples_SV-counts_and_SILVA-taxonomy.tsv" ), sep = "\t", eol = "\n", quote = F, col.names = NA)
-print(paste("Assign taxonomy (Silva) finishes at",Sys.time, sep = " "))
+## print(paste("Assign taxonomy (Silva) finishes at",Sys.time, sep = " "))
 # Assign RDP taxonomy
-print(paste("Assign taxonomy (RDP) starts at",Sys.time, sep = " "))
+## print(paste("Assign taxonomy (RDP) starts at",Sys.time, sep = " "))
 taxa.rdp <- assignTaxonomy(seqtab.nochim, "../reference_dbs_16S/rdp_train_set_18.fa.gz", multithread = threads)
 
 # Replace NAs in taxonomy assignment table with prefix corresponding to tax rank
@@ -448,7 +444,7 @@ otu.rdp.tax.table <- otu.rdp.tax.table[,-1]
 # extract representative sequences and save to file
 
 write.table(otu.rdp.tax.table, paste0( output.dir, "/all_samples_SV-counts_and_RDP-taxonomy.tsv" ), sep = "\t", eol = "\n", quote = F, col.names = NA)
-print(paste("Assign taxonomy (RDP) finishes at",Sys.time, sep = " "))
+## print(paste("Assign taxonomy (RDP) finishes at",Sys.time, sep = " "))
 ```
 
 \newpage
