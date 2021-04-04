@@ -43,6 +43,17 @@ for(p in requiredPackages){
 for(p in requiredPackages){
   require(p,character.only = TRUE)
 }
+if(Sys.which("conda") == "") {
+  if(unname(Sys.info()["sysname"]) == "Linux") {
+    system("wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh")
+    system("bash Miniconda3-latest-Linux-x86_64.sh -b")
+    system("conda activate base")
+  } else {
+    system("wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh")
+    system("bash Miniconda3-latest-Linux-x86_64.sh -b")
+    system("conda activate base")
+  }
+}
 
 ### install dependencies using conda
 if(Sys.which("pandoc") == "") {
