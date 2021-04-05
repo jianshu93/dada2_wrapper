@@ -167,10 +167,10 @@ for( i in 1 : length(fnFs)) {
   rm(i)
 }
 # Save to file
-pdf(paste0(readQC.folder,"/FWD_read_plot.pdf"), onefile = TRUE)
-marrangeGrob( fwd.qc.plots.list, ncol=2, nrow=3, top = NULL )
-dev.off()
-plot_grid(rev.qc.plots.list)
+mF <- marrangeGrob( fwd.qc.plots.list, ncol=2, nrow=length(fnFs)/2, top = NULL )
+ggsave(paste0(readQC.folder,"/FWD_read_plot.pdf"), mF, width = 7, height = 2.5*length(fnFs)/2, device="pdf")
+
+plot_grid(fwd.qc.plots.list[[1]])
 rm(fwd.qc.plots.list)
 ```
 

@@ -33,26 +33,15 @@ if("--help" %in% args) {
 }
 if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager",repos='http://cran.us.r-project.org')
-library(BiocManager)
+library(BiocManager,quietly=TRUE)
   ### check if packages exists and then install packages that does not exist
-requiredPackages = c('parallel','dplyr','RCurl','mgcv','ggplot2','tibble','GenomicRanges','SummarizedExperiment',
+requiredPackages = c('parallel','dplyr','RCurl','mgcv','ggplot2','cowplot','tibble','GenomicRanges','SummarizedExperiment',
                     'BiocParallel','Rsamtools','dada2','msa','phangorn','gridExtra','rmarkdown','knitr')
 for(p in requiredPackages){
-  if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
+  if(!require(p,character.only = TRUE, quietly=TRUE)) BiocManager::install(p,update = FALSE,quietly=TRUE)
 }
 for(p in requiredPackages){
-  require(p,character.only = TRUE)
-}
-if(Sys.which("conda") == "") {
-  if(unname(Sys.info()["sysname"]) == "Linux") {
-    system("wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh")
-    system("bash Miniconda3-latest-Linux-x86_64.sh -b")
-    system("conda activate base")
-  } else {
-    system("wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh")
-    system("bash Miniconda3-latest-Linux-x86_64.sh -b")
-    system("conda activate base")
-  }
+  require(p,character.only = TRUE,quietly=TRUE)
 }
 
 ### install dependencies using conda
@@ -60,7 +49,7 @@ if(Sys.which("pandoc") == "") {
   system("conda install pandoc")
 }
 ### load libraries
-library("knitr")
+library("knitr",quietly=TRUE)
 # If sample pooling logical is not provided, then default to FALSE, i.e. for independent analysis of each sample.
 # Otherwise, if set then TRUE for pooling samples.
 if( any( grepl("--pool", args) ) ) {
@@ -187,7 +176,7 @@ if(args.list$single == "TRUE") {
 }
 
 
-if(args.list$feast = "TRUE") {
+if(!is.null(args.list$feast) == "TRUE") {
   requiredPackages = c("Rcpp", "RcppArmadillo", "vegan", "dplyr", "reshape2", "gridExtra", "ggplot2", "ggthemes")
   for(p in requiredPackages){
     if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
