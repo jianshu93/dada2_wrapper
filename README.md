@@ -83,7 +83,7 @@ for(p in requiredPackages){
 The whole process of install packages will take a few minutes on MacOS (.dmg installed R from R website) but will take much longer on Linux, like ~25 minutes (also ~25 minutes if you are using conda R on MacOS, because you need compiling using conda R). I woud strongly suggest that you use MacOS for small dataset (less than 30 samples) and linux cluster for large dataset.
 
 #### Time needed and platform dependent questions
-for the testing dataset, 6 samples, a few million reads per sample, it takes ~8 minutes on a 4-core (8 threads) Macbook Pro but ~15 minutes on a dual-core (4 threads) iMac. For a 72 sample dataset with more than 10 million reads per sample, it takes about 5 hours on a 24 threads Linux system on a cluster node.
+for the testing dataset, 6 samples, fifty thousand reads per sample, it takes ~8 minutes on a 4-core (8 threads) Macbook Pro but ~15 minutes on a dual-core (4 threads) iMac. For a 72 sample dataset with 200 thousand reads per sample, it takes about 5 hours on a 24 threads Linux system on a cluster node.
 
 #### Running DADA2 on TORQUE based or SLURM based cluster
 

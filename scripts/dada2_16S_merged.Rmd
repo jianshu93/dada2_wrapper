@@ -75,49 +75,6 @@ replaceNA.in.assignedTaxonomy <-
     return( tax.table )
   }
 
-plot_grid <- function(x, margin = c(1, 1, 1, 1), tags = NULL) {
-  # check package availability -----
-  if (!requireNamespace("gridExtra", quietly = TRUE)) {
-    stop("Package `gridExtra` needed for this function to work. Please install it.", call. = F)
-  }
-
-  # if user did not pass plot.list value, but the complete object returned
-  # by sjPlot-functions, get plot-list then
-  if (!inherits(x, "list") || inherits(x, "sjPlot")) x <- x[["plot.list"]]
-
-  # add margin to each plot, so no axis labels are cropped
-  x <- lapply(x, function(pl) {
-    pl + theme(plot.margin = unit(margin, "cm"))
-  })
-
-  tags_labels <- NULL
-
-  # Add tags
-  if (isTRUE(tags)) {
-    tags_labels = LETTERS
-  } else{
-    if (length(tags) < length(x)) {
-      warning("Not enough tags labels in list. Using letters instead.")
-      tags_labels = LETTERS
-    } else{
-      tags_labels = tags
-    }
-  }
-
-  if (!is.null(tags_labels)) {
-    for (i in 1:length(x)) {
-      x[[i]] <- x[[i]] + labs(tag = tags_labels[i])
-    }
-  }
-
-
-  # compute amount of columns and rows
-  ncol <- round(sqrt(length(x)))
-  nrow <- ceiling(length(x) / ncol)
-
-  f <- eval(bquote(gridExtra::"grid.arrange"))
-  do.call(f, c(x, nrow = nrow, ncol = ncol))
-}
 # print filepath
 cat( str_break( getwd() ), sep = "\n" )
 ```
@@ -183,11 +140,10 @@ for( i in 1 : length(fnFs_final)) {
   rm(i)
 }
 # Save to file
-pdf(paste0(readQC.folder,"/Merged_read_plot.pdf"), onefile = TRUE)
-marrangeGrob( fwd.qc.plots.list, ncol=2, nrow=3, top = NULL )
-dev.off()
-plot_grid(rev.qc.plots.list)
-rm(fwd.qc.plots.list)
+mF <- marrangeGrob( fwd.qc.plots.list, ncol=2, nrow=length(fnFs)/2, top = NULL )
+ggsave(paste0(readQC.folder,"/FWD_read_plot.pdf"), mF, width = 7, height = 2.5*length(fnFs)/2, device="pdf")
+
+plot_grid(fwd.qc.plots.list[[1]])
 ```
 
 <br>
