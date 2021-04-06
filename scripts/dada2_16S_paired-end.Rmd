@@ -44,7 +44,7 @@ cat(Rvs_pr)
 if(!is.null(n_threads) == "TRUE") {
   threads <- as.numeric(n_threads)
 } else {
-  threads <- detectCores()
+  threads <- RcppParallel::defaultNumThreads()
 }
 cat(threads)
 ### set DADA2 variables
@@ -137,7 +137,7 @@ for( i in 1 : length(fnFs)) {
 ## fwd.qc.plots.list[[1]]
 # Save to file
 mF <- marrangeGrob( fwd.qc.plots.list, ncol=2, nrow=length(fnFs)/2, top = NULL )
-ggsave(paste0(readQC.folder,"/FWD_read_plot.pdf"), mF, width = 7, height = 2.5*length(fnFs)/2, device="pdf")
+ggsave(paste0(readQC.folder,"/FWD_read_plot.pdf"), mF, width = 7, height = 2.5*length(fnFs)/2, device="pdf",limitsize = FALSE)
 plot_grid(fwd.qc.plots.list[[1]], ncol = 2, labels = "auto")
 rm(fwd.qc.plots.list)
 
@@ -152,7 +152,7 @@ for( i in 1 : length(fnRs)) {
 # Save to file
 
 mR <- marrangeGrob( rev.qc.plots.list, ncol=2, nrow=length(fnRs)/2, top = NULL )
-ggsave(paste0(readQC.folder,"/REV_read_plot.pdf"), mR, width = 7, height = 2.5*length(fnRs)/2, device="pdf")
+ggsave(paste0(readQC.folder,"/REV_read_plot.pdf"), mR, width = 7, height = 2.5*length(fnRs)/2, device="pdf", limitsize = FALSE)
 plot_grid(rev.qc.plots.list[[1]], ncol = 2, labels = "auto")
 rm(rev.qc.plots.list)
 ```
