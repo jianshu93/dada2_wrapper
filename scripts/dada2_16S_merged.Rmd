@@ -40,7 +40,11 @@ library(RcppParallel)
 ### variables inherited from main script
 Fwd_pr
 Rvs_pr
-threads <- detectCores()
+if(!is.null(n_threads) == "TRUE") {
+  threads <- as.numeric(n_threads)
+} else {
+  threads <- RcppParallel::defaultNumThreads()
+}
 
 ### set DADA2 variables
 getDadaOpt()
@@ -141,7 +145,7 @@ for( i in 1 : length(fnFs_final)) {
 }
 # Save to file
 mF <- marrangeGrob( fwd.qc.plots.list, ncol=2, nrow=length(fnFs)/2, top = NULL )
-ggsave(paste0(readQC.folder,"/FWD_read_plot.pdf"), mF, width = 7, height = 2.5*length(fnFs)/2, device="pdf")
+ggsave(paste0(readQC.folder,"/FWD_read_plot.pdf"), mF, width = 7, height = 2.5*length(fnFs)/2, device="pdf",limitsize = FALSE)
 
 plot_grid(fwd.qc.plots.list[[1]])
 ```
