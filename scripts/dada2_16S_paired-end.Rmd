@@ -136,10 +136,11 @@ for( i in 1 : length(fnFs)) {
 ## plot the quality plot of forward reads of first sample
 ## fwd.qc.plots.list[[1]]
 # Save to file
-mF <- marrangeGrob( fwd.qc.plots.list, ncol=2, nrow=length(fnFs)/2, top = NULL )
-ggsave(paste0(readQC.folder,"/FWD_read_plot.pdf"), mF, width = 7, height = 2.5*length(fnFs)/2, device="pdf",limitsize = FALSE)
+mF <- marrangeGrob( fwd.qc.plots.list, ncol=2, nrow=length(fnFs)/2+1, top = NULL )
+ggsave(paste0(readQC.folder,"/FWD_read_plot.pdf"), mF, width = 7, height = 2.5*(length(fnFs)/2+1), device="pdf", limitsize = FALSE)
 plot_grid(fwd.qc.plots.list[[1]], ncol = 2, labels = "auto")
 rm(fwd.qc.plots.list)
+
 
 # Reverse reads
 rev.qc.plots.list <- list()
@@ -149,10 +150,8 @@ for( i in 1 : length(fnRs)) {
 }
 ## plot the quality plot of forward reads of first sample
 ##rev.qc.plots.list[[1]]
-# Save to file
-
-mR <- marrangeGrob( rev.qc.plots.list, ncol=2, nrow=length(fnRs)/2, top = NULL )
-ggsave(paste0(readQC.folder,"/REV_read_plot.pdf"), mR, width = 7, height = 2.5*length(fnRs)/2, device="pdf", limitsize = FALSE)
+mR <- marrangeGrob( rev.qc.plots.list, ncol=2, nrow=length(fnRs)/2+1, top = NULL )
+ggsave(paste0(readQC.folder,"/REV_read_plot.pdf"), mR, width = 7, height = 2.5*(length(fnRs)/2+1), device="pdf", limitsize = FALSE)
 plot_grid(rev.qc.plots.list[[1]], ncol = 2, labels = "auto")
 rm(rev.qc.plots.list)
 ```
@@ -190,7 +189,7 @@ if(!is.null(Fwd_pr) & !is.null(Rvs_pr)){
 # 4. Output files are compressed by default.
 
 rd.counts <- as.data.frame(
-  filterAndTrim(fnFs.noprimer, filtFs, fnRs.noprimer, filtRs, truncLen=c(225,190),
+  filterAndTrim(fnFs.noprimer, filtFs, fnRs.noprimer, filtRs, truncLen=c(200,190),
              maxN=0, maxEE=c(1,2), truncQ=10, rm.phix=TRUE,
              compress=TRUE, multithread=threads, matchIDs=TRUE) 
 )

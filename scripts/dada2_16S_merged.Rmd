@@ -37,6 +37,8 @@ library(tibble)
 library(parallel)
 library(Rcpp)
 library(RcppParallel)
+library(dplyr)
+library(cowplot)
 ### variables inherited from main script
 Fwd_pr
 Rvs_pr
@@ -144,10 +146,11 @@ for( i in 1 : length(fnFs_final)) {
   rm(i)
 }
 # Save to file
-mF <- marrangeGrob( fwd.qc.plots.list, ncol=2, nrow=length(fnFs)/2, top = NULL )
-ggsave(paste0(readQC.folder,"/FWD_read_plot.pdf"), mF, width = 7, height = 2.5*length(fnFs)/2, device="pdf",limitsize = FALSE)
+mF <- marrangeGrob( fwd.qc.plots.list, ncol=2, nrow=length(fnFs_final)/2+1, top = NULL )
+ggsave(paste0(readQC.folder,"/FWD_read_plot.pdf"), mF, width = 7, height = 2.5*(length(fnFs_final)/2+1), device="pdf", limitsize = FALSE)
+plot_grid(fwd.qc.plots.list[[1]], ncol = 2, labels = "auto")
+rm(fwd.qc.plots.list)
 
-plot_grid(fwd.qc.plots.list[[1]])
 ```
 
 <br>
@@ -178,7 +181,7 @@ if(!is.null(Fwd_pr) & !is.null(Rvs_pr)) {
 # 4. Output files are compressed by default.
 
 rd.counts <- as.data.frame(
-  filterAndTrim(fnFs.noprimer, filtFs, truncLen=240,
+  filterAndTrim(fnFs.noprimer, filtFs, truncLen=200,
               maxN=0, maxEE=1, truncQ=10, rm.phix=TRUE,
               compress=TRUE, multithread=threads) 
 )
