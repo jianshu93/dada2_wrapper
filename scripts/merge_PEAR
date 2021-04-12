@@ -1,0 +1,18 @@
+for F in *.fastq.gz; do
+	gunzip $F
+done
+mkdir tmp_new
+for F in *_R1.fastq; do
+	R=${F%_*}_R2.fastq
+	BASE=${F##*/}
+	SAMPLE=${BASE%_*}
+	pear -f ${F} -r ${R} -o ./tmp_new/${SAMPLE}_R1.fastq -j $(nproc)
+done
+
+for F in *_R1.fastq; do
+    R=${F%_*}_R2.fastq
+	BASE=${F##*/}
+	SAMPLE=${BASE%_*}
+	pigz -p $(nproc) $F
+	pigz -p $(nproc) $R
+done
