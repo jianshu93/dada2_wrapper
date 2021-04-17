@@ -3,7 +3,6 @@
 # Summarize sequence variant (OTU) count table, from dada2 workflow, through taxonomic ranks.  
 # Note that taxonomic ranks must be separate tab-delimited columns at the right end of the table, as output from the dada2 workflow. 
 
-
 ## Collect arguments
 args <- commandArgs(TRUE)
 

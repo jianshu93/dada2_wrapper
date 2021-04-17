@@ -35,7 +35,7 @@ if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager",repos='http://cran.us.r-project.org')
 library(BiocManager,quietly=TRUE)
   ### check if packages exists and then install packages that does not exist
-requiredPackages = c('parallel','dplyr','RCurl','mgcv','ggplot2','cowplot','tibble','GenomicRanges','SummarizedExperiment',
+requiredPackages = c('parallel','dplyr','devtools','RCurl','mgcv','ggplot2','cowplot','tibble','GenomicRanges','SummarizedExperiment',
                     'BiocParallel','Rsamtools','dada2','msa','phangorn','gridExtra','rmarkdown','knitr')
 for(p in requiredPackages){
   if(!require(p,character.only = TRUE, quietly=TRUE)) BiocManager::install(p,update = FALSE,quietly=TRUE)
@@ -43,11 +43,10 @@ for(p in requiredPackages){
 for(p in requiredPackages){
   require(p,character.only = TRUE,quietly=TRUE)
 }
+### update and use the newest version
+library("devtools")
+devtools::install_github("benjjneb/dada2")
 
-### install dependencies using conda
-if(Sys.which("pandoc") == "") {
-  system("conda install pandoc")
-}
 ### load libraries
 library("knitr",quietly=TRUE)
 # If sample pooling logical is not provided, then default to FALSE, i.e. for independent analysis of each sample.
