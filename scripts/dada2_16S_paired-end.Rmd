@@ -25,6 +25,8 @@ Implementing DADA2 pipeline for resolving sequence variants from 16S rRNA gene a
 ## Load R packages:  
 ```{r load_packages, echo=FALSE}
 # load packages
+library(Rcpp)
+library(RcppParallel)
 library(dada2); packageVersion("dada2")
 library(ggplot2)
 library(msa)
@@ -34,8 +36,6 @@ library(stringr)
 library("Biostrings")
 library(tibble)
 library(parallel)
-library(Rcpp)
-library(RcppParallel)
 library(dplyr)
 library(cowplot)
 ### variables inherited from main script
