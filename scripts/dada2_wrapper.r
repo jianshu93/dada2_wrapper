@@ -27,7 +27,7 @@ if("--help" %in% args) {
       --help                      - print this text
       
       Example:
-      ./dada2_cli.r --input_dir=input --output_dir=output --pool \n\n")
+      ./dada2_wrapper.r --input_dir=input --output_dir=output --pool \n\n")
   
   q(save="no")
 }
@@ -41,7 +41,7 @@ for(p in requiredPackages){
   if(!require(p,character.only = TRUE, quietly=TRUE)) BiocManager::install(p,update = FALSE,quietly=TRUE)
 }
 for(p in requiredPackages){
-  require(p,character.only = TRUE,quietly=TRUE)
+  require(p,character.only = TRUE, quietly=TRUE)
 }
 ### update and use the newest version if you want.
 ###library("devtools")
@@ -80,6 +80,8 @@ if( any( grepl("--feast", args) ) ) {
 } else {
   args <- c(args, "--feast=FALSE")
 }
+
+
 
 ## Parse arguments (we expect the form --arg=value)
 parseArgs <- function(x) strsplit(sub("^--", "", x), "=")
@@ -134,10 +136,10 @@ if(args.list$single == "TRUE") {
   if(args.list$diversity == "TRUE") {
     requiredPackages = c('GUniFrac','devtools','phyloseq','vegan','iNEXT')
     for(p in requiredPackages){
-      if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
+      if(!require(p,character.only = TRUE,quietly = TRUE)) BiocManager::install(p,update = FALSE)
     }
     library(devtools)
-    devtools::install_github("vmikk/metagMisc")
+    devtools::install_github("vmikk/metagMisc",force = TRUE)
     rmarkdown::render("Diversity.Rmd",
                   output_file = paste( output.dir, "/16Sreport_diversity_single", Sys.Date(), ".pdf", sep=''))
   }
@@ -148,10 +150,10 @@ if(args.list$single == "TRUE") {
     if(args.list$diversity == "TRUE") {
       requiredPackages = c('GUniFrac','devtools','phyloseq','vegan','iNEXT')
       for(p in requiredPackages){
-        if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
+        if(!require(p,character.only = TRUE,quietly = TRUE)) BiocManager::install(p,update = FALSE)
       }
       library(devtools)
-      devtools::install_github("vmikk/metagMisc")
+      devtools::install_github("vmikk/metagMisc",force = TRUE)
       rmarkdown::render("Diversity.Rmd",
                   output_file = paste( output.dir, "/16Sreport_diversity_pair", Sys.Date(), ".pdf", sep=''))     
     } 
@@ -164,10 +166,10 @@ if(args.list$single == "TRUE") {
     if(args.list$diversity == "TRUE") {
       requiredPackages = c('GUniFrac','devtools','phyloseq','vegan','iNEXT')
       for(p in requiredPackages){
-        if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
+        if(!require(p,character.only = TRUE,quietly = TRUE)) BiocManager::install(p,update = FALSE)
       }
       library(devtools)
-      devtools::install_github("vmikk/metagMisc")
+      devtools::install_github("vmikk/metagMisc",force = TRUE)
       rmarkdown::render("Diversity.Rmd",
                   output_file = paste( output.dir, "/16Sreport_diversity_single", Sys.Date(), ".pdf", sep=''))
     }
@@ -181,7 +183,7 @@ if(!is.null(args.list$feast) == "TRUE") {
     if(!require(p,character.only = TRUE)) BiocManager::install(p,update = FALSE)
   }
   library(devtools)
-  devtools::install_github("cozygene/FEAST")
+  devtools::install_github("cozygene/FEAST",force = TRUE)
   if(!file.exists(fst_metada)) {
     stop("Metadata file does not exist, please offer a valid metadata file.\n", call.=FALSE)
   } else {
