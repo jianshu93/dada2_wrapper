@@ -43,9 +43,9 @@ for(p in requiredPackages){
 for(p in requiredPackages){
   require(p,character.only = TRUE,quietly=TRUE)
 }
-### update and use the newest version
-library("devtools")
-devtools::install_github("benjjneb/dada2")
+### update and use the newest version if you want.
+###library("devtools")
+###devtools::install_github("benjjneb/dada2",force = TRUE)
 
 ### load libraries
 library("knitr",quietly=TRUE)
