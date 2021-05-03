@@ -12,12 +12,14 @@
 
 module purge
 module load texlive/2020
-source ~/.bash_profile
+source ~/.bashrc
 conda init bash
+
+### activate the environment in which you have installed R can be base environment or a new R environment you created
 conda activate base
 which Rscript
 
 git clone https://github.com/jianshu93/dada2_wrapper
 cd dada2_wrapper/scripts
-Rscript ./dada2_cli.r --input_dir=input --output_dir=output --pool
-Rscript ./dada2_cli.r --input_dir=input --output_dir=output_nopool
+Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=./output_paired --pool --threads=24
+Rscript ./dada2_wrapper.r --input_dir=../demo_input --output_dir=./output_paired_unpool --threads=24
