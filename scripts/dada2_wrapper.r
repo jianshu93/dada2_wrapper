@@ -16,7 +16,7 @@ if(length(args) < 1) {
 ## Help section
 if("--help" %in% args) {
   cat("
-      dada2_cli.r
+      dada2_wrapper.r
       
       Arguments:
       --input_dir=path/to/dir     - (relative) path to directory containing raw input '.fastq' or '.fastq.gz' files
