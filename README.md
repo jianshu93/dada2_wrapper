@@ -11,7 +11,7 @@ if you are using conda (and I strongly recommend doing so, you will not have pro
 ```
 conda create -n R python=3.8
 conda activate R
-conda install -c conda-forge r-essentials
+conda install -c conda-forge r-essentials=4.0
 ```
 
 * Primer removal
