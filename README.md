@@ -4,14 +4,14 @@ DADA2 R workflow for profiling 16S sequence reads
 
 * This repo contains workflows for analysing exact sequence variants from 16S sequencing reads using the DADA2 algorithm (https://github.com/benjjneb/dada2).
 
-YOU MUST HAVE R INSTALLED BEFORE DOING ANYTHING (R >=3.6.3)
+YOU MUST HAVE R INSTALLED BEFORE DOING ANYTHING (R >=4.0.5)
 
 if you are using conda (and I strongly recommend doing so, you will not have problems in this way) install a new R like this:
 
 ```
 conda create -n R python=3.8
 conda activate R
-conda install -c conda-forge r-essentials=4.0
+conda install -c conda-forge r-essentials=4.1
 ```
 
 * Primer removal
