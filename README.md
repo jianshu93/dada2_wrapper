@@ -107,9 +107,9 @@ sbatch dada2_wrapper.sbatch
 
 ## for interactive mode on TORQUE and SLURM system:
 
-qsub -I -l nodes=1:ppn=24 -l walltime=10:00:00 -l mem=600gb -q inferno -A GT-ktk3-CODA20 -o /storage/home/hcoda1/4/jzhao399/p-ktk3-0/rich_project_bio-konstantinidis/scripts/log/${PBS_JOBNAME}_${PBS_JOBID}.out -e /storage/home/hcoda1/4/jzhao399/p-ktk3-0/rich_project_bio-konstantinidis/scripts/log/${PBS_JOBNAME}_${PBS_JOBID}.err -N dada2
+qsub -I -l nodes=1:ppn=24 -l walltime=10:00:00 -l mem=100gb -q inferno -A GT-ktk3-CODA20 -N dada2
 
-srun --partition=ieg_plus --nodes=1 --ntasks-per-node=1 --cpus-per-task=24 --time=24:00:00 --mem=120G --pty bash -i
+srun --partition=ieg_plus --nodes=1 --ntasks-per-node=1 --cpus-per-task=24 --time=24:00:00 --mem=60G --pty bash -i
 
 ## then run as it is a regular terminal
 
