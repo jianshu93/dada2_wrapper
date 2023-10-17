@@ -9,6 +9,8 @@ YOU MUST HAVE R INSTALLED BEFORE DOING ANYTHING (R >=4.0.5)
 if you are using conda (and I strongly recommend doing so, you will not have problems in this way) install a new R like this:
 
 ```
+### first of all if you are on a server or supercomputer when C/C++ compilers are loaded, you need to clear them
+module purge
 conda create -n R python=3.8
 conda activate R
 conda install -c conda-forge r-essentials=4.1
